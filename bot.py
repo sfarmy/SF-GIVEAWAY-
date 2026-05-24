@@ -17,7 +17,7 @@ import asyncio
 # BOT TOKEN
 # ==========================================
 
-TOKEN = "YOUR_NEW_BOT_TOKEN"
+TOKEN = "8830410554:AAFg8lg4tJM5P3u_xNYm0jhh7nwXeBuY-6E"
 
 # ==========================================
 # CHANNELS LINK + ID
