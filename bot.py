@@ -11,11 +11,13 @@ from telegram.ext import (
     ContextTypes
 )
 
+import asyncio
+
 # ==========================================
 # BOT TOKEN
 # ==========================================
 
-TOKEN = "8830410554:AAFg8lg4tJM5P3u_xNYm0jhh7nwXeBuY-6E"
+TOKEN = "YOUR_NEW_BOT_TOKEN"
 
 # ==========================================
 # CHANNELS LINK + ID
@@ -67,7 +69,7 @@ async def check_force_join(user_id, bot):
 
     try:
 
-        # CHECK ALL CHANNELS
+        # CHECK CHANNELS
         for channel in CHANNELS:
 
             member = await bot.get_chat_member(
@@ -99,30 +101,71 @@ async def check_force_join(user_id, bot):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    buttons = [
-        [
-            InlineKeyboardButton(
-                "🎁 YOU ARE PARTICIPATE IN SF GIVEAWAY 🎁",
-                callback_data="main"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "✅ YES",
-                callback_data="yes"
-            ),
+    user = update.effective_user
 
+    username = (
+        f"@{user.username}"
+        if user.username
+        else user.first_name
+    )
+
+    # HELLO MESSAGE
+    msg = await update.message.reply_text(
+        f"👋 HELLO {username}"
+    )
+
+    await asyncio.sleep(1.5)
+
+    # LOADING EFFECT
+    await msg.edit_text("⚡ LOADING...")
+    await asyncio.sleep(1)
+
+    await msg.edit_text("🔍 CHECKING SYSTEM...")
+    await asyncio.sleep(1)
+
+    await msg.edit_text("📢 PREPARING CHANNELS...")
+    await asyncio.sleep(1)
+
+    # JOIN BUTTONS
+    join_buttons = []
+
+    # CHANNEL BUTTONS
+    for channel in CHANNELS:
+
+        join_buttons.append(
+            [
+                InlineKeyboardButton(
+                    f"📢 {channel['name']}",
+                    url=channel["link"]
+                )
+            ]
+        )
+
+    # GROUP BUTTON
+    join_buttons.append(
+        [
             InlineKeyboardButton(
-                "❌ NO",
-                callback_data="no"
+                f"💬 {GROUP['name']}",
+                url=GROUP["link"]
             )
         ]
-    ]
+    )
 
-    reply_markup = InlineKeyboardMarkup(buttons)
+    # DONE BUTTON
+    join_buttons.append(
+        [
+            InlineKeyboardButton(
+                "✅ DONE JOINING",
+                callback_data="check_join"
+            )
+        ]
+    )
 
-    await update.message.reply_text(
-        "🔥 WELCOME TO SF GIVEAWAY 🔥",
+    reply_markup = InlineKeyboardMarkup(join_buttons)
+
+    # FINAL JOIN PANEL
+    await msg.edit_text(
+        "⚠️ JOIN ALL CHANNELS & GROUP TO CONTINUE ⚠️",
         reply_markup=reply_markup
     )
 
@@ -138,90 +181,23 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     # ======================================
-    # NO BUTTON
+    # CHECK JOIN
     # ======================================
 
-    if query.data == "no":
+    if query.data == "check_join":
 
-        buttons = [
-            [
-                InlineKeyboardButton(
-                    "🎁 YOU ARE PARTICIPATE IN SF GIVEAWAY 🎁",
-                    callback_data="main"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    "✅ YES",
-                    callback_data="yes"
-                ),
+        # LOADING EFFECT
+        await query.message.edit_text(
+            "🔍 CHECKING JOIN STATUS..."
+        )
 
-                InlineKeyboardButton(
-                    "❌ NO",
-                    callback_data="no"
-                )
-            ]
-        ]
-
-        reply_markup = InlineKeyboardMarkup(buttons)
+        await asyncio.sleep(1)
 
         await query.message.edit_text(
-            "⚠️ ARE YOU SURE ? ⚠️",
-            reply_markup=reply_markup
+            "⚡ VERIFYING CHANNELS..."
         )
 
-    # ======================================
-    # YES BUTTON
-    # ======================================
-
-    elif query.data == "yes":
-
-        join_buttons = []
-
-        # CHANNEL BUTTONS
-        for channel in CHANNELS:
-
-            join_buttons.append(
-                [
-                    InlineKeyboardButton(
-                        f"📢 {channel['name']}",
-                        url=channel["link"]
-                    )
-                ]
-            )
-
-        # GROUP BUTTON
-        join_buttons.append(
-            [
-                InlineKeyboardButton(
-                    f"💬 {GROUP['name']}",
-                    url=GROUP["link"]
-                )
-            ]
-        )
-
-        # DONE BUTTON
-        join_buttons.append(
-            [
-                InlineKeyboardButton(
-                    "✅ DONE JOINING",
-                    callback_data="check_join"
-                )
-            ]
-        )
-
-        reply_markup = InlineKeyboardMarkup(join_buttons)
-
-        await query.message.edit_text(
-            "⚠️ JOIN ALL CHANNELS & GROUP TO PARTICIPATE ⚠️",
-            reply_markup=reply_markup
-        )
-
-    # ======================================
-    # FORCE JOIN CHECK
-    # ======================================
-
-    elif query.data == "check_join":
+        await asyncio.sleep(1)
 
         joined = await check_force_join(
             user_id,
@@ -232,15 +208,51 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if joined:
 
             await query.message.edit_text(
-                "✅ SUCCESSFULLY JOINED ALL CHANNELS 🔥\n\n🎉 YOU ARE NOW PARTICIPATING IN SF GIVEAWAY"
+                "✅ VERIFIED SUCCESSFULLY 🔥\n\n🎉 YOU JOINED ALL CHANNELS & GROUP"
             )
 
         # FAILED
         else:
 
-            await query.answer(
-                "⚠️ FIRST JOIN ALL CHANNELS & GROUP",
-                show_alert=True
+            join_buttons = []
+
+            # CHANNEL BUTTONS
+            for channel in CHANNELS:
+
+                join_buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            f"📢 {channel['name']}",
+                            url=channel["link"]
+                        )
+                    ]
+                )
+
+            # GROUP BUTTON
+            join_buttons.append(
+                [
+                    InlineKeyboardButton(
+                        f"💬 {GROUP['name']}",
+                        url=GROUP["link"]
+                    )
+                ]
+            )
+
+            # DONE BUTTON
+            join_buttons.append(
+                [
+                    InlineKeyboardButton(
+                        "✅ DONE JOINING",
+                        callback_data="check_join"
+                    )
+                ]
+            )
+
+            reply_markup = InlineKeyboardMarkup(join_buttons)
+
+            await query.message.edit_text(
+                "❌ AAPNE ABHI TAK SAB CHANNELS YA GROUP JOIN NAHI KIYE",
+                reply_markup=reply_markup
             )
 
 # ==========================================
