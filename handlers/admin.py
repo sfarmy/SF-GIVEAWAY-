@@ -13,7 +13,7 @@ def is_admin(uid):
 # ================= ADMIN PANEL =================
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    if not is_admin(update.effective_user.id):
+    if update.effective_user.id not in ADMIN_IDS:
         return
 
     buttons = [
@@ -34,13 +34,12 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     uid = q.from_user.id
 
-    if not is_admin(uid):
+    if uid not in ADMIN_IDS:
         return
 
     await q.answer()
     data = q.data
 
-    # ================= REDEEM =================
     if data == "adm_redeem":
         await q.message.edit_text(
             "🎁 REDEEM SYSTEM\n\n"
@@ -49,14 +48,12 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # ================= BROADCAST =================
     if data == "adm_broadcast":
         await q.message.edit_text(
             "📢 BROADCAST MODE\n\nUse:\n/broadcast your message"
         )
         return
 
-    # ================= MSG =================
     if data == "adm_msg":
         await q.message.edit_text(
             "✉️ USER MESSAGE MODE\n\nUse:\n/msg user_id message"
@@ -67,7 +64,7 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= BROADCAST =================
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    if not is_admin(update.effective_user.id):
+    if update.effective_user.id not in ADMIN_IDS:
         return
 
     text = " ".join(context.args)
@@ -84,7 +81,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     for u in users:
         try:
-            await context.bot.send_message(u[0], text)
+            await context.bot.send_message(chat_id=u[0], text=text)
             sent += 1
         except:
             pass
@@ -95,18 +92,17 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= MSG USER =================
 async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    if not is_admin(update.effective_user.id):
+    if update.effective_user.id not in ADMIN_IDS:
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("❌ Format: /msg user_id message")
         return
 
     try:
         uid = int(context.args[0])
         text = " ".join(context.args[1:])
-    except:
-        await update.message.reply_text("❌ Format: /msg user_id message")
-        return
-
-    try:
-        await context.bot.send_message(uid, text)
+        await context.bot.send_message(chat_id=uid, text=text)
         await update.message.reply_text("✅ Sent")
     except:
         await update.message.reply_text("❌ Failed")
@@ -115,7 +111,7 @@ async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= CREATE CODE =================
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    if not is_admin(update.effective_user.id):
+    if update.effective_user.id not in ADMIN_IDS:
         return
 
     try:
@@ -130,10 +126,10 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"✅ Code Created: {code}")
 
 
-# ================= LIST CODE =================
+# ================= LIST CODES =================
 async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    if not is_admin(update.effective_user.id):
+    if update.effective_user.id not in ADMIN_IDS:
         return
 
     data = await list_redeem_codes()
@@ -154,10 +150,7 @@ async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def get_admin_handlers():
     return [
         CommandHandler("admin", admin_panel),
-
-        # 🔥 FIX: avoid conflict with user callbacks
         CallbackQueryHandler(admin_buttons, pattern="^adm_"),
-
         CommandHandler("broadcast", broadcast),
         CommandHandler("msg", msg_user),
         CommandHandler("create", create),
