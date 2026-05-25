@@ -77,7 +77,7 @@ async def open_main_menu(message, user_id):
     )
 
 
-# ================= START (REFERRAL FIX ADDED) =================
+# ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
@@ -86,7 +86,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await add_user(user.id, username)
     await give_welcome_bonus(user.id)
 
-    # ✅ REFERRAL FIX HERE
+    # referral safe fix
     if context.args:
         try:
             ref_id = int(context.args[0])
@@ -114,10 +114,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-    context.user_data["referrer_id"] = context.args[0] if context.args else None
 
-
-# ================= CALLBACK =================
+# ================= CALLBACKS =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -139,14 +137,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text("✅ VERIFIED")
         await asyncio.sleep(1)
-
         await open_main_menu(q.message, user_id)
         return
 
     if data == "myinfo":
         tickets = await get_tickets(user_id)
 
-        # referral link fix
         bot_username = context.bot.username
         link = f"https://t.me/{bot_username}?start={user_id}"
 
@@ -160,6 +156,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "leaderboard":
         users = await top_users()
+
         text = "🏆 TOP USERS\n\n"
         i = 1
         for u in users:
@@ -176,6 +173,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "bonus":
         r = await claim_daily_bonus(user_id)
+
         txt = "🎉 +2 TICKETS" if r == "success" else "⚠ ALREADY CLAIMED"
 
         await q.message.edit_text(
@@ -188,6 +186,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "redeem":
         user_state[user_id] = "redeem"
+
         await q.message.edit_text(
             "🎁 ENTER REDEEM CODE:",
             reply_markup=InlineKeyboardMarkup([
@@ -197,7 +196,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-# ================= TEXT HANDLER =================
+# ================= TEXT HANDLER (SAFE FIX) =================
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not update.message:
