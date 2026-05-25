@@ -4,7 +4,7 @@ import time
 DB_NAME = "database.db"
 
 
-# ================= INIT DB =================
+# ================= INIT =================
 async def init_db():
     async with aiosqlite.connect(DB_NAME) as db:
 
@@ -35,42 +35,26 @@ async def init_db():
 # ================= ADD USER =================
 async def add_user(user_id, username):
     async with aiosqlite.connect(DB_NAME) as db:
-
         cursor = await db.execute(
-            "SELECT user_id FROM users WHERE user_id = ?",
+            "SELECT user_id FROM users WHERE user_id=?",
             (user_id,)
         )
-        user = await cursor.fetchone()
+        data = await cursor.fetchone()
 
-        if not user:
+        if not data:
             await db.execute("""
-                INSERT INTO users (
-                    user_id, username, tickets,
-                    referrals, welcome_used,
-                    referral_used, last_bonus_day,
-                    is_banned
-                )
+                INSERT INTO users (user_id, username, tickets, referrals, welcome_used, referral_used, last_bonus_day, is_banned)
                 VALUES (?, ?, 0, 0, 0, 0, 0, 0)
             """, (user_id, username))
 
             await db.commit()
 
 
-# ================= GET USER =================
-async def get_user(user_id):
-    async with aiosqlite.connect(DB_NAME) as db:
-        cursor = await db.execute(
-            "SELECT * FROM users WHERE user_id = ?",
-            (user_id,)
-        )
-        return await cursor.fetchone()
-
-
-# ================= GET TICKETS =================
+# ================= TICKETS =================
 async def get_tickets(user_id):
     async with aiosqlite.connect(DB_NAME) as db:
         cursor = await db.execute(
-            "SELECT tickets FROM users WHERE user_id = ?",
+            "SELECT tickets FROM users WHERE user_id=?",
             (user_id,)
         )
         data = await cursor.fetchone()
@@ -89,13 +73,12 @@ async def top_users():
         return await cursor.fetchall()
 
 
-# ================= WELCOME BONUS (ONLY ONCE) =================
+# ================= WELCOME BONUS =================
 async def give_welcome_bonus(user_id):
-
     async with aiosqlite.connect(DB_NAME) as db:
 
         cursor = await db.execute(
-            "SELECT welcome_used FROM users WHERE user_id = ?",
+            "SELECT welcome_used FROM users WHERE user_id=?",
             (user_id,)
         )
         data = await cursor.fetchone()
@@ -110,20 +93,19 @@ async def give_welcome_bonus(user_id):
             UPDATE users
             SET tickets = tickets + 15,
                 welcome_used = 1
-            WHERE user_id = ?
+            WHERE user_id=?
         """, (user_id,))
 
         await db.commit()
         return "success"
 
 
-# ================= REFERRAL SYSTEM (ONLY ONCE) =================
-async def add_referral(referrer_id, user_id):
-
+# ================= REFERRAL =================
+async def add_referral(referrer_id, user_id, username):
     async with aiosqlite.connect(DB_NAME) as db:
 
         cursor = await db.execute(
-            "SELECT referral_used FROM users WHERE user_id = ?",
+            "SELECT referral_used FROM users WHERE user_id=?",
             (user_id,)
         )
         data = await cursor.fetchone()
@@ -134,26 +116,18 @@ async def add_referral(referrer_id, user_id):
         if data[0] == 1:
             return "already"
 
-        # mark referral used
         await db.execute("""
-            UPDATE users
-            SET referral_used = 1
-            WHERE user_id = ?
+            UPDATE users SET referral_used=1 WHERE user_id=?
         """, (user_id,))
 
-        # reward referrer
         await db.execute("""
-            UPDATE users
-            SET tickets = tickets + 10,
-                referrals = referrals + 1
-            WHERE user_id = ?
+            UPDATE users SET tickets = tickets + 10, referrals = referrals + 1
+            WHERE user_id=?
         """, (referrer_id,))
 
-        # reward new user
         await db.execute("""
-            UPDATE users
-            SET tickets = tickets + 5
-            WHERE user_id = ?
+            UPDATE users SET tickets = tickets + 5
+            WHERE user_id=?
         """, (user_id,))
 
         await db.commit()
@@ -166,13 +140,12 @@ def get_today():
 
 
 async def claim_daily_bonus(user_id):
-
     today = get_today()
 
     async with aiosqlite.connect(DB_NAME) as db:
 
         cursor = await db.execute(
-            "SELECT last_bonus_day FROM users WHERE user_id = ?",
+            "SELECT last_bonus_day FROM users WHERE user_id=?",
             (user_id,)
         )
         data = await cursor.fetchone()
@@ -186,8 +159,8 @@ async def claim_daily_bonus(user_id):
         await db.execute("""
             UPDATE users
             SET tickets = tickets + 2,
-                last_bonus_day = ?
-            WHERE user_id = ?
+                last_bonus_day=?
+            WHERE user_id=?
         """, (today, user_id))
 
         await db.commit()
