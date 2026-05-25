@@ -1,3 +1,5 @@
+import asyncio
+
 from telegram.ext import ApplicationBuilder
 
 from config import TOKEN
@@ -8,12 +10,19 @@ from database.db import init_db
 
 
 # ==========================================
+# FIX EVENT LOOP
+# ==========================================
+
+loop = asyncio.new_event_loop()
+
+asyncio.set_event_loop(loop)
+
+
+# ==========================================
 # DATABASE INIT
 # ==========================================
 
-import asyncio
-
-asyncio.run(init_db())
+loop.run_until_complete(init_db())
 
 
 # ==========================================
