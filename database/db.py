@@ -26,6 +26,17 @@ async def init_db():
             '''
         )
 
+        await db.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS referrals (
+
+                referred_id INTEGER PRIMARY KEY,
+                referrer_id INTEGER
+
+            )
+            '''
+        )
+
         await db.commit()
 
 
@@ -57,32 +68,10 @@ async def add_user(user_id, username):
                 )
                 VALUES (?, ?, ?, ?, ?)
                 ''',
-                (
-                    user_id,
-                    username,
-                    5,
-                    0,
-                    0
-                )
+                (user_id, username, 5, 0, 0)
             )
 
             await db.commit()
-
-
-# ==========================================
-# GET USER
-# ==========================================
-
-async def get_user(user_id):
-
-    async with aiosqlite.connect(DB_NAME) as db:
-
-        cursor = await db.execute(
-            "SELECT * FROM users WHERE user_id = ?",
-            (user_id,)
-        )
-
-        return await cursor.fetchone()
 
 
 # ==========================================
@@ -98,32 +87,9 @@ async def get_tickets(user_id):
             (user_id,)
         )
 
-        user = await cursor.fetchone()
+        data = await cursor.fetchone()
 
-        if user:
-            return user[0]
-
-        return 0
-
-
-# ==========================================
-# ADD TICKETS
-# ==========================================
-
-async def add_tickets(user_id, amount):
-
-    async with aiosqlite.connect(DB_NAME) as db:
-
-        await db.execute(
-            '''
-            UPDATE users
-            SET tickets = tickets + ?
-            WHERE user_id = ?
-            ''',
-            (amount, user_id)
-        )
-
-        await db.commit()
+        return data[0] if data else 0
 
 
 # ==========================================
@@ -147,42 +113,48 @@ async def top_users():
 
 
 # ==========================================
-# REFERRAL SYSTEM
+# REFERRAL SYSTEM (FIXED)
 # ==========================================
 
 async def add_referral(referrer_id, user_id):
 
     async with aiosqlite.connect(DB_NAME) as db:
 
-        # check if user exists
         cursor = await db.execute(
-            "SELECT * FROM users WHERE user_id = ?",
+            "SELECT * FROM referrals WHERE referred_id = ?",
             (user_id,)
         )
 
-        user = await cursor.fetchone()
+        exists = await cursor.fetchone()
 
-        if not user:
-            return False
+        if exists:
+            return "already"
 
-        # update referrer tickets + referrals count
         await db.execute(
             '''
-            UPDATE users
-            SET tickets = tickets + 10,
-                referrals = referrals + 1
-            WHERE user_id = ?
+            INSERT INTO referrals (referred_id, referrer_id)
+            VALUES (?, ?)
             ''',
+            (user_id, referrer_id)
+        )
+
+        await db.execute(
+            "UPDATE users SET tickets = tickets + 10 WHERE user_id = ?",
             (referrer_id,)
+        )
+
+        await db.execute(
+            "UPDATE users SET tickets = tickets + 5 WHERE user_id = ?",
+            (user_id,)
         )
 
         await db.commit()
 
-        return True
+        return "success"
 
 
 # ==========================================
-# DAILY BONUS SYSTEM
+# BONUS SYSTEM
 # ==========================================
 
 async def claim_bonus(user_id):
@@ -201,9 +173,7 @@ async def claim_bonus(user_id):
         if not data:
             return False
 
-        last_bonus = data[0]
-
-        if last_bonus == today:
+        if data[0] == today:
             return False
 
         await db.execute(
