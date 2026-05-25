@@ -29,24 +29,31 @@ GROUP = {
 
 user_state = {}
 
-# ================= FORCE JOIN =================
+# ================= FORCE JOIN (FIXED) =================
 async def check_force_join(user_id, bot):
     try:
         for c in CHANNELS:
-            m = await bot.get_chat_member(c["id"], user_id)
-            if m.status in ["left", "kicked"]:
+            try:
+                m = await bot.get_chat_member(c["id"], user_id)
+                if m.status in ["left", "kicked"]:
+                    return False
+            except:
                 return False
 
-        m = await bot.get_chat_member(GROUP["id"], user_id)
-        if m.status in ["left", "kicked"]:
+        try:
+            m = await bot.get_chat_member(GROUP["id"], user_id)
+            if m.status in ["left", "kicked"]:
+                return False
+        except:
             return False
 
         return True
+
     except:
         return False
 
 
-# ================= MAIN MENU =================
+# ================= MAIN MENU (UNCHANGED) =================
 async def open_main_menu(message, user_id):
 
     tickets = await get_tickets(user_id)
@@ -74,7 +81,7 @@ async def open_main_menu(message, user_id):
     )
 
 
-# ================= START =================
+# ================= START (UNCHANGED) =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
@@ -105,7 +112,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["referrer_id"] = context.args[0] if context.args else None
 
 
-# ================= BUTTONS =================
+# ================= BUTTONS (ONLY FIXED PART) =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -119,13 +126,18 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await open_main_menu(q.message, user_id)
         return
 
-    # JOIN CHECK
+    # CHECK JOIN (FIXED)
     if data == "check_join":
-        if not await check_force_join(user_id, context.bot):
+
+        ok = await check_force_join(user_id, context.bot)
+
+        if not ok:
             await q.message.edit_text("❌ JOIN ALL CHANNELS FIRST")
             return
 
         await q.message.edit_text("✅ VERIFIED")
+        await asyncio.sleep(1)
+
         await open_main_menu(q.message, user_id)
         return
 
@@ -174,7 +186,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-# ================= MESSAGE HANDLER (REDEEM INPUT) =================
+# ================= TEXT HANDLER =================
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = update.effective_user.id
