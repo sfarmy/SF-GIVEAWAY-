@@ -29,23 +29,29 @@ GROUP = {
 
 user_state = {}
 
-# ================= FORCE JOIN (FIXED + DEBUG SAFE) =================
+# ================= FORCE JOIN (FINAL FIX) =================
 async def check_force_join(user_id, bot):
+    # channels check
     for c in CHANNELS:
         try:
             m = await bot.get_chat_member(c["id"], user_id)
+
             if m.status in ["left", "kicked"]:
                 return False
+
         except Exception as e:
-            print("CHANNEL CHECK ERROR:", c["name"], e)
+            print(f"[JOIN ERROR] {c['name']} ->", e)
             return False
 
+    # group check
     try:
         m = await bot.get_chat_member(GROUP["id"], user_id)
+
         if m.status in ["left", "kicked"]:
             return False
+
     except Exception as e:
-        print("GROUP CHECK ERROR:", e)
+        print("[GROUP ERROR] ->", e)
         return False
 
     return True
@@ -124,7 +130,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await open_main_menu(q.message, user_id)
         return
 
-    # CHECK JOIN (FIXED)
+    # CHECK JOIN (FIXED CORE)
     if data == "check_join":
 
         ok = await check_force_join(user_id, context.bot)
