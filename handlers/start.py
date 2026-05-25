@@ -163,4 +163,34 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = "🏆 TOP USERS\n\n"
         i = 1
         for u in users:
-            text += f
+            text += f"{i}. {u[0]} ➜ {u[1]}\n"
+            i += 1
+
+        await query.message.edit_text(text)
+
+
+    elif query.data == "bonus":
+        res = await claim_daily_bonus(user_id)
+
+        if res == "success":
+            txt = "🎉 +2 TICKETS"
+        elif res == "already":
+            txt = "⚠️ ALREADY CLAIMED"
+        else:
+            txt = "❌ ERROR"
+
+        await query.message.edit_text(txt)
+
+
+    elif query.data == "back":
+        await open_main_menu(query.message, user_id)
+
+
+# ==========================================
+# HANDLER
+# ==========================================
+def get_handlers():
+    return [
+        CommandHandler("start", start),
+        CallbackQueryHandler(buttons)
+    ]
