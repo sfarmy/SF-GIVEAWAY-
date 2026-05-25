@@ -1,15 +1,20 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler, ContextTypes
-from database.db import add_user, get_tickets, top_users, add_referral, claim_daily_bonus, give_welcome_bonus
+from database.db import (
+    add_user,
+    get_tickets,
+    top_users,
+    add_referral,
+    claim_daily_bonus,
+    give_welcome_bonus
+)
+
 import asyncio
 
 
 CHANNELS = [
     {"name": "SF ARMY", "link": "https://t.me/+TwoCQG8QZPM1OGRl", "id": -1003689156772},
     {"name": "SF TOOL", "link": "https://t.me/anushar_file", "id": -1003746793908},
-    {"name": "SF MM", "link": "https://t.me/EagleMiddleUpdates", "id": -1003971360634},
-    {"name": "SF VOUCHER", "link": "https://t.me/eaglevoucher", "id": -1003770492772},
-    {"name": "SF GIVEAWAY", "link": "https://t.me/sfgiveaways", "id": -1003664665551}
 ]
 
 GROUP = {
@@ -19,23 +24,9 @@ GROUP = {
 }
 
 
-async def check_force_join(user_id, bot):
-    try:
-        for c in CHANNELS:
-            m = await bot.get_chat_member(c["id"], user_id)
-            if m.status in ["left", "kicked"]:
-                return False
-
-        m = await bot.get_chat_member(GROUP["id"], user_id)
-        if m.status in ["left", "kicked"]:
-                return False
-
-        return True
-    except:
-        return False
-
-
+# ================= MAIN MENU =================
 async def open_main_menu(message, user_id):
+
     tickets = await get_tickets(user_id)
 
     buttons = [
@@ -58,32 +49,23 @@ async def open_main_menu(message, user_id):
     )
 
 
+# ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
     username = f"@{user.username}" if user.username else user.first_name
 
-    referrer_id = None
-    if context.args:
-        try:
-            referrer_id = int(context.args[0])
-        except:
-            pass
-
     await add_user(user.id, username)
     await give_welcome_bonus(user.id)
 
-    msg = await update.message.reply_text(f"👋 HELLO {username}")
-
-    await asyncio.sleep(1)
-    await msg.edit_text("⚡ LOADING...")
+    msg = await update.message.reply_text("👋 HELLO")
     await asyncio.sleep(1)
 
     buttons = []
     for c in CHANNELS:
         buttons.append([InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])])
 
-    buttons.append([InlineKeyboardButton(f"💬 {GROUP['name']}", url=GROUP["link"])])
+    buttons.append([InlineKeyboardButton("💬 JOIN GROUP", url=GROUP["link"])])
     buttons.append([InlineKeyboardButton("✅ DONE JOINING", callback_data="check_join")])
 
     await msg.edit_text(
@@ -91,60 +73,82 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-    context.user_data["referrer_id"] = referrer_id
+    context.user_data["referrer_id"] = context.args[0] if context.args else None
 
 
+# ================= BUTTON HANDLER =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
     user_id = q.from_user.id
-    username = q.from_user.first_name
-
     await q.answer()
 
-    if q.data == "check_join":
+    data = q.data
 
-        if not await check_force_join(user_id, context.bot):
-            await q.message.edit_text("❌ JOIN ALL CHANNELS FIRST")
-            return
-
-        await q.message.edit_text("✅ VERIFIED")
-
-        ref = context.user_data.get("referrer_id")
-
-        if ref and ref != user_id:
-            res = await add_referral(ref, user_id)
-
-            if res == "success":
-                await context.bot.send_message(ref, f"🎉 NEW REF: {username}")
-                await context.bot.send_message(user_id, "🎉 +5 TICKETS")
-
+    # ===== BACK FIX (MOST IMPORTANT) =====
+    if data == "back":
         await open_main_menu(q.message, user_id)
+        return
 
+    # ===== REDEEM =====
+    if data == "redeem":
+        await q.message.edit_text(
+            "🎁 REDEEM SYSTEM",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
+        return
 
-    elif q.data == "myinfo":
-        t = await get_tickets(user_id)
-        await q.message.edit_text(f"👤 {username}\n🎟 {t}")
+    # ===== REWARD =====
+    if data == "reward":
+        await q.message.edit_text(
+            "🏆 REWARD SYSTEM",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
+        return
 
-    elif q.data == "leaderboard":
+    # ===== LEADERBOARD =====
+    if data == "leaderboard":
         users = await top_users()
-        txt = "🏆 TOP\n\n"
+        text = "🏆 TOP USERS\n\n"
+
         for i, u in enumerate(users, 1):
-            txt += f"{i}. {u[0]} - {u[1]}\n"
-        await q.message.edit_text(txt)
+            text += f"{i}. {u[0]} ➜ {u[1]}\n"
 
-    elif q.data == "bonus":
+        await q.message.edit_text(
+            text,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
+        return
+
+    # ===== MY INFO =====
+    if data == "myinfo":
+        tickets = await get_tickets(user_id)
+        await q.message.edit_text(
+            f"👤 USER\n🎟 {tickets}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
+        return
+
+    # ===== BONUS =====
+    if data == "bonus":
         r = await claim_daily_bonus(user_id)
-        await q.message.edit_text("🎉 CLAIMED" if r=="success" else "⚠ ALREADY")
+        txt = "🎉 +2 TICKETS" if r == "success" else "⚠ ALREADY CLAIMED"
 
-    elif q.data == "redeem":
-        await q.message.edit_text("🎁 REDEEM COMING SOON")
-
-    elif q.data == "reward":
-        await q.message.edit_text("🏆 REWARD COMING SOON")
-
-    elif q.data == "back":
-        await open_main_menu(q.message, user_id)
+        await q.message.edit_text(
+            txt,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
+        return
 
 
 def get_handlers():
