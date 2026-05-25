@@ -1,16 +1,6 @@
-handlers/leaderboard.py me ye FULL code daal 👇
-
-from telegram import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup
-)
-
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from database.db import top_users
 
-
-# ==========================================
-# LEADERBOARD SYSTEM
-# ==========================================
 
 async def open_leaderboard(query):
 
@@ -18,38 +8,19 @@ async def open_leaderboard(query):
 
     text = "🏆 TOP 15 USERS\n\n"
 
-    count = 1
+    rank = 1
 
     for user in users:
 
-        username = user[0]
+        username = user[0] or "Unknown User"
         tickets = user[1]
 
-        if not username:
-            username = "Unknown User"
-
-        text += (
-            f"{count}. {username} "
-            f"→ 🎟️ {tickets}\n"
-        )
-
-        count += 1
-
-    buttons = [
-
-        [
-            InlineKeyboardButton(
-                "🔙 BACK",
-                callback_data="back"
-            )
-        ]
-    ]
-
-    reply_markup = InlineKeyboardMarkup(
-        buttons
-    )
+        text += f"{rank}. {username} ➜ 🎟️ {tickets}\n"
+        rank += 1
 
     await query.message.edit_text(
         text,
-        reply_markup=reply_markup
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+        ])
     )
