@@ -77,7 +77,7 @@ async def open_main_menu(message, user_id):
     )
 
 
-# ================= START =================
+# ================= START (REFERRAL FIX ADDED) =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
@@ -85,6 +85,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await add_user(user.id, username)
     await give_welcome_bonus(user.id)
+
+    # ✅ REFERRAL FIX HERE
+    if context.args:
+        try:
+            ref_id = int(context.args[0])
+            if ref_id != user.id:
+                await add_referral(ref_id, user.id, username)
+        except:
+            pass
 
     msg = await update.message.reply_text(f"👋 HELLO {username}")
 
@@ -108,7 +117,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["referrer_id"] = context.args[0] if context.args else None
 
 
-# ================= CALLBACK HANDLER =================
+# ================= CALLBACK =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -136,8 +145,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "myinfo":
         tickets = await get_tickets(user_id)
+
+        # referral link fix
+        bot_username = context.bot.username
+        link = f"https://t.me/{bot_username}?start={user_id}"
+
         await q.message.edit_text(
-            f"👤 {q.from_user.first_name}\n🎟 {tickets}",
+            f"👤 {q.from_user.first_name}\n\n🎟 Tickets: {tickets}\n🔗 Referral: {link}",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔙 BACK", callback_data="back")]
             ])
