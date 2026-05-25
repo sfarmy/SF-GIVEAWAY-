@@ -14,8 +14,9 @@ from database.db import (
     add_user,
     get_tickets,
     top_users,
-    claim_bonus,
-    add_referral
+    add_referral,
+    claim_daily_bonus,
+    give_welcome_bonus
 )
 
 import asyncio
@@ -26,31 +27,11 @@ import asyncio
 # ==========================================
 
 CHANNELS = [
-    {
-        "name": "SF ARMY",
-        "link": "https://t.me/+TwoCQG8QZPM1OGRl",
-        "id": -1003689156772
-    },
-    {
-        "name": "SF TOOL",
-        "link": "https://t.me/anushar_file",
-        "id": -1003746793908
-    },
-    {
-        "name": "SF MM",
-        "link": "https://t.me/EagleMiddleUpdates",
-        "id": -1003971360634
-    },
-    {
-        "name": "SF VOUCHER",
-        "link": "https://t.me/eaglevoucher",
-        "id": -1003770492772
-    },
-    {
-        "name": "SF GIVEAWAY",
-        "link": "https://t.me/sfgiveaways",
-        "id": -1003664665551
-    }
+    {"name": "SF ARMY", "link": "https://t.me/+TwoCQG8QZPM1OGRl", "id": -1003689156772},
+    {"name": "SF TOOL", "link": "https://t.me/anushar_file", "id": -1003746793908},
+    {"name": "SF MM", "link": "https://t.me/EagleMiddleUpdates", "id": -1003971360634},
+    {"name": "SF VOUCHER", "link": "https://t.me/eaglevoucher", "id": -1003770492772},
+    {"name": "SF GIVEAWAY", "link": "https://t.me/sfgiveaways", "id": -1003664665551}
 ]
 
 
@@ -98,10 +79,7 @@ async def open_main_menu(message, user_id):
             InlineKeyboardButton("🏆 LEADERBOARD", callback_data="leaderboard")
         ],
         [
-            InlineKeyboardButton("🎁 REDEEM CODE", callback_data="redeem")
-        ],
-        [
-            InlineKeyboardButton("🎉 BONUS", callback_data="bonus")
+            InlineKeyboardButton("🎉 DAILY BONUS", callback_data="bonus")
         ]
     ]
 
@@ -131,26 +109,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # save user
     await add_user(user.id, username)
 
+    # welcome bonus (ONLY ONCE)
+    welcome_msg = await give_welcome_bonus(user.id)
+
     # greeting
     msg = await update.message.reply_text(f"👋 HELLO {username}")
 
     await asyncio.sleep(1)
-
     await msg.edit_text("⚡ LOADING...")
     await asyncio.sleep(1)
-
     await msg.edit_text("🔍 CHECKING SYSTEM...")
-    await asyncio.sleep(1)
-
-    await msg.edit_text("📢 PREPARING CHANNELS...")
     await asyncio.sleep(1)
 
     # join buttons
     join_buttons = []
 
-    for channel in CHANNELS:
+    for c in CHANNELS:
         join_buttons.append([
-            InlineKeyboardButton(f"📢 {channel['name']}", url=channel["link"])
+            InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])
         ])
 
     join_buttons.append([
@@ -166,12 +142,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(join_buttons)
     )
 
-    # store referrer temporarily in context
     context.user_data["referrer_id"] = referrer_id
 
 
 # ==========================================
-# CALLBACK HANDLER
+# BUTTON HANDLER
 # ==========================================
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -190,66 +165,54 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.edit_text("🔍 CHECKING JOIN STATUS...")
         await asyncio.sleep(1)
 
-        await query.message.edit_text("⚡ VERIFYING CHANNELS...")
-        await asyncio.sleep(1)
-
         joined = await check_force_join(user_id, context.bot)
 
-        if joined:
+        if not joined:
+            await query.message.edit_text("❌ PLEASE JOIN ALL CHANNELS & GROUP FIRST")
+            return
 
-            await query.message.edit_text("✅ VERIFIED SUCCESSFULLY 🔥")
+        await query.message.edit_text("✅ VERIFIED SUCCESSFULLY 🔥")
 
-            # ==========================================
-            # REFERRAL ONLY AFTER JOIN
-            # ==========================================
+        # ==========================================
+        # REFERRAL SYSTEM (ONLY AFTER JOIN)
+        # ==========================================
 
-            referrer_id = context.user_data.get("referrer_id")
+        referrer_id = context.user_data.get("referrer_id")
 
-            if referrer_id and referrer_id != user_id:
+        if referrer_id and referrer_id != user_id:
 
-                result = await add_referral(referrer_id, user_id)
+            result = await add_referral(referrer_id, user_id)
 
-                if result == "success":
+            if result == "success":
 
-                    try:
-                        await context.bot.send_message(
-                            chat_id=referrer_id,
-                            text=(
-                                "🎉 NEW USER JOINED\n"
-                                f"👤 {query.from_user.first_name}\n"
-                                "🎟️ +10 TICKETS"
-                            )
-                        )
-                    except:
-                        pass
+                try:
+                    await context.bot.send_message(
+                        chat_id=referrer_id,
+                        text="🎉 NEW USER JOINED\n🎟️ +10 TICKETS"
+                    )
+                except:
+                    pass
 
-                    try:
-                        await context.bot.send_message(
-                            chat_id=user_id,
-                            text="🎉 WELCOME BONUS RECEIVED\n🎟️ +5 TICKETS"
-                        )
-                    except:
-                        pass
+                try:
+                    await context.bot.send_message(
+                        chat_id=user_id,
+                        text="🎉 WELCOME BONUS RECEIVED\n🎟️ +5 TICKETS"
+                    )
+                except:
+                    pass
 
+            elif result == "already":
 
-                elif result == "already":
+                try:
+                    await context.bot.send_message(
+                        chat_id=user_id,
+                        text="⚠️ WELCOME BONUS ALREADY CLAIMED (ONE TIME ONLY)"
+                    )
+                except:
+                    pass
 
-                    try:
-                        await context.bot.send_message(
-                            chat_id=user_id,
-                            text="⚠️ WELCOME BONUS ALREADY CLAIMED (ONE TIME ONLY)"
-                        )
-                    except:
-                        pass
-
-            await asyncio.sleep(1)
-            await open_main_menu(query.message, user_id)
-
-        else:
-
-            await query.message.edit_text(
-                "❌ PLEASE JOIN ALL CHANNELS & GROUP FIRST"
-            )
+        await asyncio.sleep(1)
+        await open_main_menu(query.message, user_id)
 
 
     # ==========================================
@@ -283,14 +246,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         users = await top_users()
 
-        text = "🏆 TOP 15 USERS\n\n"
+        text = "🏆 TOP USERS\n\n"
 
-        rank = 1
+        i = 1
         for u in users:
-            name = u[0] or "Unknown User"
-            tickets = u[1]
-            text += f"{rank}. {name} ➜ 🎟️ {tickets}\n"
-            rank += 1
+            name = u[0] or "Unknown"
+            text += f"{i}. {name} ➜ 🎟️ {u[1]}\n"
+            i += 1
 
         await query.message.edit_text(
             text,
@@ -301,17 +263,21 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     # ==========================================
-    # BONUS
+    # DAILY BONUS
     # ==========================================
 
     elif query.data == "bonus":
 
-        claimed = await claim_bonus(user_id)
+        result = await claim_daily_bonus(user_id)
 
-        if claimed:
+        if result == "success":
             text = "🎉 DAILY BONUS CLAIMED\n🎟️ +2 TICKETS"
+
+        elif result == "already":
+            text = "⚠️ YOU ALREADY CLAIMED TODAY BONUS\n⏳ COME BACK AFTER 12:00 AM"
+
         else:
-            text = "⚠️ WELCOME BONUS ALREADY CLAIMED (ONE TIME ONLY)"
+            text = "❌ ERROR"
 
         await query.message.edit_text(
             text,
