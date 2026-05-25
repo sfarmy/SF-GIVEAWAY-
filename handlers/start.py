@@ -14,7 +14,8 @@ from database.db import (
     add_user,
     get_tickets,
     top_users,
-    claim_bonus
+    claim_bonus,
+    add_referral
 )
 
 import asyncio
