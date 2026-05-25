@@ -1,16 +1,16 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from database.db import (
     add_user,
     get_tickets,
     top_users,
     add_referral,
     claim_daily_bonus,
-    give_welcome_bonus
+    give_welcome_bonus,
+    use_redeem_code
 )
 
 import asyncio
-
 
 # ================= CHANNELS =================
 CHANNELS = [
@@ -27,6 +27,7 @@ GROUP = {
     "id": -1002708620916
 }
 
+user_state = {}
 
 # ================= FORCE JOIN =================
 async def check_force_join(user_id, bot):
@@ -41,7 +42,6 @@ async def check_force_join(user_id, bot):
             return False
 
         return True
-
     except:
         return False
 
@@ -62,6 +62,9 @@ async def open_main_menu(message, user_id):
         ],
         [
             InlineKeyboardButton("🎟 DAILY BONUS", callback_data="bonus")
+        ],
+        [
+            InlineKeyboardButton("🔙 BACK", callback_data="back")
         ]
     ]
 
@@ -102,7 +105,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["referrer_id"] = context.args[0] if context.args else None
 
 
-# ================= BUTTON HANDLER =================
+# ================= BUTTONS =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -111,136 +114,90 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     data = q.data
 
-
-    # ================= BACK =================
+    # BACK
     if data == "back":
         await open_main_menu(q.message, user_id)
         return
 
-
-    # ================= JOIN CHECK =================
+    # JOIN CHECK
     if data == "check_join":
-
         if not await check_force_join(user_id, context.bot):
             await q.message.edit_text("❌ JOIN ALL CHANNELS FIRST")
             return
 
         await q.message.edit_text("✅ VERIFIED")
-
-        ref = context.user_data.get("referrer_id")
-
-        if ref and ref != user_id:
-
-            res = await add_referral(ref, user_id, q.from_user.first_name)
-
-            if res == "success":
-
-                try:
-                    await context.bot.send_message(
-                        ref,
-                        f"🎉 NEW REFERRAL: {q.from_user.first_name}\n🎟 +10 TICKETS"
-                    )
-                except:
-                    pass
-
-                try:
-                    await context.bot.send_message(
-                        user_id,
-                        "🎉 YOU GOT +5 TICKETS"
-                    )
-                except:
-                    pass
-
-            elif res == "already":
-                await context.bot.send_message(
-                    user_id,
-                    "⚠ ALREADY USED REFERRAL"
-                )
-
         await open_main_menu(q.message, user_id)
         return
 
-
-    # ================= MY INFO =================
+    # MY INFO
     if data == "myinfo":
-
         tickets = await get_tickets(user_id)
-
-        link = f"https://t.me/{context.bot.username}?start={user_id}"
-
         await q.message.edit_text(
-            f"👤 {q.from_user.first_name}\n🎟 {tickets}\n🔗 {link}",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
-            ])
+            f"👤 {q.from_user.first_name}\n🎟 {tickets}",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
         )
         return
 
-
-    # ================= LEADERBOARD =================
+    # LEADERBOARD
     if data == "leaderboard":
-
         users = await top_users()
-
         text = "🏆 TOP USERS\n\n"
         i = 1
-
         for u in users:
             text += f"{i}. {u[0]} ➜ {u[1]}\n"
             i += 1
 
         await q.message.edit_text(
             text,
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
-            ])
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
         )
         return
 
-
-    # ================= BONUS =================
+    # BONUS
     if data == "bonus":
-
         r = await claim_daily_bonus(user_id)
-
         txt = "🎉 +2 TICKETS" if r == "success" else "⚠ ALREADY CLAIMED"
 
         await q.message.edit_text(
             txt,
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
-            ])
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
         )
         return
 
-
-    # ================= REDEEM =================
+    # REDEEM
     if data == "redeem":
-
+        user_state[user_id] = "redeem"
         await q.message.edit_text(
-            "🎁 REDEEM COMING SOON",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
-            ])
+            "🎁 ENTER REDEEM CODE:",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
         )
         return
 
 
-    # ================= REWARD =================
-    if data == "reward":
+# ================= MESSAGE HANDLER (REDEEM INPUT) =================
+async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-        await q.message.edit_text(
-            "🏆 REWARD COMING SOON",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
-            ])
-        )
-        return
+    user_id = update.effective_user.id
+    text = update.message.text
+
+    if user_state.get(user_id) == "redeem":
+
+        result = await use_redeem_code(user_id, text)
+
+        if result == "invalid":
+            await update.message.reply_text("❌ INVALID CODE")
+        elif result == "expired":
+            await update.message.reply_text("⚠ EXPIRED CODE")
+        else:
+            await update.message.reply_text(f"🎉 +{result} TICKETS ADDED")
+
+        user_state[user_id] = None
 
 
 # ================= HANDLERS =================
 def get_handlers():
     return [
         CommandHandler("start", start),
-        CallbackQueryHandler(buttons)
+        CallbackQueryHandler(buttons),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler)
     ]
