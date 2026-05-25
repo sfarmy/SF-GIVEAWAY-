@@ -10,6 +10,11 @@ from telegram.ext import (
     ContextTypes
 )
 
+from database.users import (
+    add_user,
+    get_tickets
+)
+
 import asyncio
 
 
@@ -65,7 +70,6 @@ async def check_force_join(user_id, bot):
 
     try:
 
-        # CHECK CHANNELS
         for channel in CHANNELS:
 
             member = await bot.get_chat_member(
@@ -76,7 +80,6 @@ async def check_force_join(user_id, bot):
             if member.status in ["left", "kicked"]:
                 return False
 
-        # CHECK GROUP
         member = await bot.get_chat_member(
             GROUP["id"],
             user_id
@@ -96,7 +99,9 @@ async def check_force_join(user_id, bot):
 # MAIN MENU
 # ==========================================
 
-async def open_main_menu(message):
+async def open_main_menu(message, user_id):
+
+    tickets = await get_tickets(user_id)
 
     buttons = [
 
@@ -130,7 +135,10 @@ async def open_main_menu(message):
     reply_markup = InlineKeyboardMarkup(buttons)
 
     await message.edit_text(
-        "🎟️ WELCOME TO SF GIVEAWAY PANEL",
+
+        f"🎟️ WELCOME TO SF GIVEAWAY PANEL\n\n"
+        f"🎫 YOUR TICKETS: {tickets}",
+
         reply_markup=reply_markup
     )
 
@@ -147,6 +155,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"@{user.username}"
         if user.username
         else user.first_name
+    )
+
+    # SAVE USER
+    await add_user(
+        user.id,
+        username
     )
 
     # HELLO MESSAGE
@@ -169,7 +183,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # JOIN BUTTONS
     join_buttons = []
 
-    # CHANNEL BUTTONS
     for channel in CHANNELS:
 
         join_buttons.append(
@@ -181,7 +194,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         )
 
-    # GROUP BUTTON
     join_buttons.append(
         [
             InlineKeyboardButton(
@@ -191,7 +203,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     )
 
-    # DONE BUTTON
     join_buttons.append(
         [
             InlineKeyboardButton(
@@ -203,7 +214,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     reply_markup = InlineKeyboardMarkup(join_buttons)
 
-    # FINAL JOIN PANEL
     await msg.edit_text(
         "⚠️ JOIN ALL CHANNELS & GROUP TO CONTINUE ⚠️",
         reply_markup=reply_markup
@@ -227,7 +237,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == "check_join":
 
-        # LOADING EFFECT
         await query.message.edit_text(
             "🔍 CHECKING JOIN STATUS..."
         )
@@ -254,14 +263,16 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await asyncio.sleep(2)
 
-            await open_main_menu(query.message)
+            await open_main_menu(
+                query.message,
+                user_id
+            )
 
         # FAILED
         else:
 
             join_buttons = []
 
-            # CHANNEL BUTTONS
             for channel in CHANNELS:
 
                 join_buttons.append(
@@ -273,7 +284,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ]
                 )
 
-            # GROUP BUTTON
             join_buttons.append(
                 [
                     InlineKeyboardButton(
@@ -283,7 +293,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ]
             )
 
-            # DONE BUTTON
             join_buttons.append(
                 [
                     InlineKeyboardButton(
@@ -300,6 +309,62 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=reply_markup
             )
 
+    # ======================================
+    # MY INFO
+    # ======================================
+
+    elif query.data == "myinfo":
+
+        tickets = await get_tickets(user_id)
+
+        username = query.from_user.username
+
+        if username:
+            username = f"@{username}"
+        else:
+            username = query.from_user.first_name
+
+        refer_link = (
+            f"https://t.me/"
+            f"{context.bot.username}"
+            f"?start={user_id}"
+        )
+
+        buttons = [
+
+            [
+                InlineKeyboardButton(
+                    "🔙 BACK",
+                    callback_data="back"
+                )
+            ]
+        ]
+
+        reply_markup = InlineKeyboardMarkup(buttons)
+
+        await query.message.edit_text(
+
+            f"👤 USER: {username}\n\n"
+
+            f"🎟️ TICKETS: {tickets}\n\n"
+
+            f"🔗 REFER LINK:\n"
+            f"{refer_link}",
+
+            reply_markup=reply_markup
+        )
+
+    # ======================================
+    # BACK
+    # ======================================
+
+    elif query.data == "back":
+
+        await open_main_menu(
+            query.message,
+            user_id
+        )
+
 
 # ==========================================
 # HANDLERS
@@ -312,4 +377,5 @@ def get_handlers():
         CommandHandler("start", start),
 
         CallbackQueryHandler(buttons)
-  ]
+
+    ]
