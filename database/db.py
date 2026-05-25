@@ -41,7 +41,9 @@ async def add_user(user_id, username):
             (user_id,)
         )
 
-        if not await cur.fetchone():
+        exists = await cur.fetchone()
+
+        if not exists:
             await db.execute("""
                 INSERT INTO users (
                     user_id, username, tickets,
@@ -231,7 +233,6 @@ async def use_redeem_code(user_id, code):
         )
 
         await db.commit()
-
         return reward
 
 
