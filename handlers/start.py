@@ -29,7 +29,7 @@ GROUP = {
 
 user_state = {}
 
-# ================= FORCE JOIN (SAFE) =================
+# ================= FORCE JOIN =================
 async def check_force_join(user_id, bot):
     for c in CHANNELS:
         try:
@@ -117,14 +117,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = q.from_user.id
     data = q.data
 
-    # BACK
     if data == "back":
         await open_main_menu(q.message, user_id)
         return
 
-    # CHECK JOIN (FIXED CORE)
     if data == "check_join":
-
         ok = await check_force_join(user_id, context.bot)
 
         if not ok:
@@ -137,7 +134,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await open_main_menu(q.message, user_id)
         return
 
-    # MY INFO
     if data == "myinfo":
         tickets = await get_tickets(user_id)
         await q.message.edit_text(
@@ -148,7 +144,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # LEADERBOARD
     if data == "leaderboard":
         users = await top_users()
         text = "🏆 TOP USERS\n\n"
@@ -165,7 +160,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # BONUS
     if data == "bonus":
         r = await claim_daily_bonus(user_id)
         txt = "🎉 +2 TICKETS" if r == "success" else "⚠ ALREADY CLAIMED"
@@ -178,7 +172,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # REDEEM
     if data == "redeem":
         user_state[user_id] = "redeem"
         await q.message.edit_text(
@@ -190,7 +183,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-# ================= TEXT HANDLER (SAFE FIX) =================
+# ================= TEXT HANDLER =================
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not update.message:
@@ -221,5 +214,5 @@ def get_handlers():
     return [
         CommandHandler("start", start),
         CallbackQueryHandler(buttons),
-        MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler)
+        MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler),
     ]
