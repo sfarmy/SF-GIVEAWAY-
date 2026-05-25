@@ -29,31 +29,29 @@ GROUP = {
 
 user_state = {}
 
-# ================= FORCE JOIN (FIXED) =================
+# ================= FORCE JOIN (FIXED + DEBUG SAFE) =================
 async def check_force_join(user_id, bot):
-    try:
-        for c in CHANNELS:
-            try:
-                m = await bot.get_chat_member(c["id"], user_id)
-                if m.status in ["left", "kicked"]:
-                    return False
-            except:
-                return False
-
+    for c in CHANNELS:
         try:
-            m = await bot.get_chat_member(GROUP["id"], user_id)
+            m = await bot.get_chat_member(c["id"], user_id)
             if m.status in ["left", "kicked"]:
                 return False
-        except:
+        except Exception as e:
+            print("CHANNEL CHECK ERROR:", c["name"], e)
             return False
 
-        return True
-
-    except:
+    try:
+        m = await bot.get_chat_member(GROUP["id"], user_id)
+        if m.status in ["left", "kicked"]:
+            return False
+    except Exception as e:
+        print("GROUP CHECK ERROR:", e)
         return False
 
+    return True
 
-# ================= MAIN MENU (UNCHANGED) =================
+
+# ================= MAIN MENU =================
 async def open_main_menu(message, user_id):
 
     tickets = await get_tickets(user_id)
@@ -81,7 +79,7 @@ async def open_main_menu(message, user_id):
     )
 
 
-# ================= START (UNCHANGED) =================
+# ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
@@ -112,7 +110,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["referrer_id"] = context.args[0] if context.args else None
 
 
-# ================= BUTTONS (ONLY FIXED PART) =================
+# ================= BUTTONS =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
