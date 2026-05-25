@@ -5,47 +5,36 @@ from telegram.ext import ApplicationBuilder
 from config import TOKEN
 
 from handlers.start import get_handlers
-
+from handlers.admin import get_admin_handlers
 from database.db import init_db
 
 
-# ==========================================
-# FIX EVENT LOOP
-# ==========================================
-
+# ================= EVENT LOOP FIX =================
 loop = asyncio.new_event_loop()
-
 asyncio.set_event_loop(loop)
 
 
-# ==========================================
-# DATABASE INIT
-# ==========================================
-
+# ================= INIT DATABASE =================
 loop.run_until_complete(init_db())
 
 
-# ==========================================
-# BOT
-# ==========================================
-
+# ================= BOT APP =================
 app = ApplicationBuilder().token(TOKEN).build()
 
 
-# ==========================================
-# HANDLERS
-# ==========================================
+# ================= HANDLERS REGISTER =================
 
+# user handlers
 for handler in get_handlers():
+    app.add_handler(handler)
 
+# admin handlers
+for handler in get_admin_handlers():
     app.add_handler(handler)
 
 
-print("BOT RUNNING...")
+print("🤖 BOT RUNNING...")
 
 
-# ==========================================
-# START BOT
-# ==========================================
-
+# ================= START BOT =================
 app.run_polling()
