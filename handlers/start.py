@@ -29,29 +29,21 @@ GROUP = {
 
 user_state = {}
 
-# ================= FORCE JOIN (FINAL FIX) =================
+# ================= FORCE JOIN (SAFE) =================
 async def check_force_join(user_id, bot):
-    # channels check
     for c in CHANNELS:
         try:
             m = await bot.get_chat_member(c["id"], user_id)
-
             if m.status in ["left", "kicked"]:
                 return False
-
-        except Exception as e:
-            print(f"[JOIN ERROR] {c['name']} ->", e)
+        except:
             return False
 
-    # group check
     try:
         m = await bot.get_chat_member(GROUP["id"], user_id)
-
         if m.status in ["left", "kicked"]:
             return False
-
-    except Exception as e:
-        print("[GROUP ERROR] ->", e)
+    except:
         return False
 
     return True
@@ -116,13 +108,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["referrer_id"] = context.args[0] if context.args else None
 
 
-# ================= BUTTONS =================
+# ================= CALLBACK HANDLER =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
-    user_id = q.from_user.id
     await q.answer()
 
+    user_id = q.from_user.id
     data = q.data
 
     # BACK
@@ -150,7 +142,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tickets = await get_tickets(user_id)
         await q.message.edit_text(
             f"👤 {q.from_user.first_name}\n🎟 {tickets}",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
         )
         return
 
@@ -165,7 +159,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text(
             text,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
         )
         return
 
@@ -176,7 +172,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text(
             txt,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
         )
         return
 
@@ -185,16 +183,24 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state[user_id] = "redeem"
         await q.message.edit_text(
             "🎁 ENTER REDEEM CODE:",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
         )
         return
 
 
-# ================= TEXT HANDLER =================
+# ================= TEXT HANDLER (SAFE FIX) =================
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not update.message:
+        return
 
     user_id = update.effective_user.id
     text = update.message.text
+
+    if not text:
+        return
 
     if user_state.get(user_id) == "redeem":
 
