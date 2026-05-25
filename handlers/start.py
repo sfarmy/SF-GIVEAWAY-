@@ -12,6 +12,7 @@ from database.db import (
 import asyncio
 
 
+# ================= CHANNELS =================
 CHANNELS = [
     {"name": "SF ARMY", "link": "https://t.me/+TwoCQG8QZPM1OGRl", "id": -1003689156772},
     {"name": "SF TOOL", "link": "https://t.me/anushar_file", "id": -1003746793908},
@@ -45,7 +46,7 @@ async def check_force_join(user_id, bot):
         return False
 
 
-# ================= MAIN MENU (UNCHANGED + BACK SUPPORT) =================
+# ================= MAIN MENU =================
 async def open_main_menu(message, user_id):
 
     tickets = await get_tickets(user_id)
@@ -86,6 +87,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(1)
 
     buttons = []
+
     for c in CHANNELS:
         buttons.append([InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])])
 
@@ -100,7 +102,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["referrer_id"] = context.args[0] if context.args else None
 
 
-# ================= BUTTONS =================
+# ================= BUTTON HANDLER =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -110,7 +112,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = q.data
 
 
-    # ================= BACK (ONLY ADDITION) =================
+    # ================= BACK =================
     if data == "back":
         await open_main_menu(q.message, user_id)
         return
@@ -141,10 +143,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except:
                     pass
 
-                await context.bot.send_message(
-                    user_id,
-                    "🎉 YOU GOT +5 TICKETS"
-                )
+                try:
+                    await context.bot.send_message(
+                        user_id,
+                        "🎉 YOU GOT +5 TICKETS"
+                    )
+                except:
+                    pass
 
             elif res == "already":
                 await context.bot.send_message(
@@ -160,6 +165,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "myinfo":
 
         tickets = await get_tickets(user_id)
+
         link = f"https://t.me/{context.bot.username}?start={user_id}"
 
         await q.message.edit_text(
@@ -232,6 +238,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
+# ================= HANDLERS =================
 def get_handlers():
     return [
         CommandHandler("start", start),
