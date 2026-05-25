@@ -15,24 +15,12 @@ async def init_db():
         await db.execute(
             '''
             CREATE TABLE IF NOT EXISTS users (
-
                 user_id INTEGER PRIMARY KEY,
                 username TEXT,
                 tickets INTEGER DEFAULT 0,
                 referrals INTEGER DEFAULT 0,
-                last_bonus INTEGER DEFAULT 0
-
-            )
-            '''
-        )
-
-        await db.execute(
-            '''
-            CREATE TABLE IF NOT EXISTS referrals (
-
-                referred_id INTEGER PRIMARY KEY,
-                referrer_id INTEGER
-
+                last_bonus INTEGER DEFAULT 0,
+                referral_used INTEGER DEFAULT 0
             )
             '''
         )
@@ -64,11 +52,12 @@ async def add_user(user_id, username):
                     username,
                     tickets,
                     referrals,
-                    last_bonus
+                    last_bonus,
+                    referral_used
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ''',
-                (user_id, username, 5, 0, 0)
+                (user_id, username, 5, 0, 0, 0)
             )
 
             await db.commit()
@@ -113,36 +102,40 @@ async def top_users():
 
 
 # ==========================================
-# REFERRAL SYSTEM (FIXED)
+# REFERRAL SYSTEM (FINAL FIX)
 # ==========================================
 
 async def add_referral(referrer_id, user_id):
 
     async with aiosqlite.connect(DB_NAME) as db:
 
+        # check if already used referral
         cursor = await db.execute(
-            "SELECT * FROM referrals WHERE referred_id = ?",
+            "SELECT referral_used FROM users WHERE user_id = ?",
             (user_id,)
         )
 
-        exists = await cursor.fetchone()
+        data = await cursor.fetchone()
 
-        if exists:
+        if not data:
+            return "no_user"
+
+        if data[0] == 1:
             return "already"
 
+        # lock user (IMPORTANT)
         await db.execute(
-            '''
-            INSERT INTO referrals (referred_id, referrer_id)
-            VALUES (?, ?)
-            ''',
-            (user_id, referrer_id)
+            "UPDATE users SET referral_used = 1 WHERE user_id = ?",
+            (user_id,)
         )
 
+        # reward referrer
         await db.execute(
             "UPDATE users SET tickets = tickets + 10 WHERE user_id = ?",
             (referrer_id,)
         )
 
+        # reward user
         await db.execute(
             "UPDATE users SET tickets = tickets + 5 WHERE user_id = ?",
             (user_id,)
