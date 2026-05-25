@@ -1,6 +1,33 @@
-import aiosqlite
+import sqlite3
 
-from datetime import datetime
+
+conn = sqlite3.connect(
+    "database/database.db",
+    check_same_thread=False
+)
+
+cursor = conn.cursor()
+
+
+# ==========================================
+# CREATE TABLE
+# ==========================================
+
+cursor.execute("""
+
+CREATE TABLE IF NOT EXISTS users (
+
+    user_id INTEGER PRIMARY KEY,
+
+    username TEXT,
+
+    tickets INTEGER DEFAULT 0
+
+)
+
+""")
+
+conn.commit()
 
 
 # ==========================================
@@ -9,83 +36,25 @@ from datetime import datetime
 
 async def add_user(user_id, username):
 
-    async with aiosqlite.connect("database/data.db") as db:
+    cursor.execute(
 
-        cursor = await db.execute(
+        "SELECT * FROM users WHERE user_id=?",
 
-            "SELECT * FROM users WHERE user_id = ?",
-            (user_id,)
+        (user_id,)
+    )
+
+    user = cursor.fetchone()
+
+    if not user:
+
+        cursor.execute(
+
+            "INSERT INTO users VALUES (?, ?, ?)",
+
+            (user_id, username, 5)
         )
 
-        user = await cursor.fetchone()
-
-        # USER NOT EXISTS
-        if not user:
-
-            await db.execute(
-
-                """
-                INSERT INTO users
-                (
-                    user_id,
-                    username,
-                    tickets,
-                    invited_by,
-                    join_date
-                )
-
-                VALUES (?, ?, ?, ?, ?)
-                """,
-
-                (
-                    user_id,
-                    username,
-                    0,
-                    0,
-                    str(datetime.now())
-                )
-            )
-
-            await db.commit()
-
-
-# ==========================================
-# GET USER
-# ==========================================
-
-async def get_user(user_id):
-
-    async with aiosqlite.connect("database/data.db") as db:
-
-        cursor = await db.execute(
-
-            "SELECT * FROM users WHERE user_id = ?",
-            (user_id,)
-        )
-
-        return await cursor.fetchone()
-
-
-# ==========================================
-# ADD TICKETS
-# ==========================================
-
-async def add_tickets(user_id, amount):
-
-    async with aiosqlite.connect("database/data.db") as db:
-
-        await db.execute(
-
-            """
-            UPDATE users
-            SET tickets = tickets + ?
-            WHERE user_id = ?
-            """,
-
-            (amount, user_id)
-        )
-
-        await db.commit()
+        conn.commit()
 
 
 # ==========================================
@@ -94,22 +63,57 @@ async def add_tickets(user_id, amount):
 
 async def get_tickets(user_id):
 
-    async with aiosqlite.connect("database/data.db") as db:
+    cursor.execute(
 
-        cursor = await db.execute(
+        "SELECT tickets FROM users WHERE user_id=?",
 
-            """
-            SELECT tickets
-            FROM users
-            WHERE user_id = ?
-            """,
+        (user_id,)
+    )
 
-            (user_id,)
-        )
+    data = cursor.fetchone()
 
-        data = await cursor.fetchone()
+    if data:
+        return data[0]
 
-        if data:
-            return data[0]
+    return 0
 
-        return 0
+
+# ==========================================
+# ADD TICKETS
+# ==========================================
+
+async def add_tickets(user_id, amount):
+
+    current = await get_tickets(user_id)
+
+    new_amount = current + amount
+
+    cursor.execute(
+
+        "UPDATE users SET tickets=? WHERE user_id=?",
+
+        (new_amount, user_id)
+    )
+
+    conn.commit()
+
+
+# ==========================================
+# TOP USERS
+# ==========================================
+
+async def get_top_users():
+
+    cursor.execute("""
+
+    SELECT username, tickets
+
+    FROM users
+
+    ORDER BY tickets DESC
+
+    LIMIT 15
+
+    """)
+
+    return cursor.fetchall()
