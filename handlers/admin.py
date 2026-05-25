@@ -40,8 +40,7 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await q.answer()
     data = q.data
 
-
-    # ================= REDEEM MENU =================
+    # ================= REDEEM =================
     if data == "adm_redeem":
         await q.message.edit_text(
             "🎁 REDEEM SYSTEM\n\n"
@@ -50,7 +49,6 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-
     # ================= BROADCAST =================
     if data == "adm_broadcast":
         await q.message.edit_text(
@@ -58,8 +56,7 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-
-    # ================= MSG USER =================
+    # ================= MSG =================
     if data == "adm_msg":
         await q.message.edit_text(
             "✉️ USER MESSAGE MODE\n\nUse:\n/msg user_id message"
@@ -95,7 +92,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"✅ Sent to {sent} users")
 
 
-# ================= MESSAGE USER =================
+# ================= MSG USER =================
 async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not is_admin(update.effective_user.id):
@@ -115,7 +112,7 @@ async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Failed")
 
 
-# ================= REDEEM CREATE =================
+# ================= CREATE CODE =================
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not is_admin(update.effective_user.id):
@@ -133,7 +130,7 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"✅ Code Created: {code}")
 
 
-# ================= REDEEM LIST =================
+# ================= LIST CODE =================
 async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not is_admin(update.effective_user.id):
@@ -157,11 +154,12 @@ async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def get_admin_handlers():
     return [
         CommandHandler("admin", admin_panel),
-        CallbackQueryHandler(admin_buttons),
+
+        # 🔥 FIX: avoid conflict with user callbacks
+        CallbackQueryHandler(admin_buttons, pattern="^adm_"),
 
         CommandHandler("broadcast", broadcast),
         CommandHandler("msg", msg_user),
-
         CommandHandler("create", create),
         CommandHandler("list_redeem", list_redeem),
     ]
