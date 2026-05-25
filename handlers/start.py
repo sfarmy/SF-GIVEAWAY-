@@ -8,12 +8,11 @@ from database.db import (
     claim_daily_bonus,
     give_welcome_bonus
 )
+
 import asyncio
 
 
-# ==========================================
-# CHANNELS
-# ==========================================
+# ================= CHANNELS =================
 CHANNELS = [
     {"name": "SF ARMY", "link": "https://t.me/+TwoCQG8QZPM1OGRl", "id": -1003689156772},
     {"name": "SF TOOL", "link": "https://t.me/anushar_file", "id": -1003746793908},
@@ -29,9 +28,7 @@ GROUP = {
 }
 
 
-# ==========================================
-# FORCE CHECK
-# ==========================================
+# ================= FORCE JOIN =================
 async def check_force_join(user_id, bot):
     try:
         for c in CHANNELS:
@@ -45,14 +42,11 @@ async def check_force_join(user_id, bot):
 
         return True
 
-    except Exception as e:
-        print(e)
+    except:
         return False
 
 
-# ==========================================
-# MAIN MENU
-# ==========================================
+# ================= MAIN MENU =================
 async def open_main_menu(message, user_id):
 
     tickets = await get_tickets(user_id)
@@ -63,23 +57,21 @@ async def open_main_menu(message, user_id):
             InlineKeyboardButton("🏆 LEADERBOARD", callback_data="leaderboard")
         ],
         [
-            InlineKeyboardButton("🎉 DAILY BONUS", callback_data="bonus"),
-            InlineKeyboardButton("🎁 REDEEM CODE", callback_data="redeem")
+            InlineKeyboardButton("🎁 REDEEM CODE", callback_data="redeem"),
+            InlineKeyboardButton("🎉 REWARD", callback_data="reward")
         ],
         [
-            InlineKeyboardButton("🎁 REWARD", callback_data="reward")
+            InlineKeyboardButton("🎟 DAILY BONUS", callback_data="bonus")
         ]
     ]
 
     await message.edit_text(
-        f"🎟️ WELCOME PANEL\n\n🎫 YOUR TICKETS: {tickets}",
+        f"🎟 WELCOME PANEL\n\n🎫 TICKETS: {tickets}",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
 
-# ==========================================
-# START
-# ==========================================
+# ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
@@ -94,7 +86,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await add_user(user.id, username)
 
-    context.user_data["referrer_id"] = referrer_id
+    # welcome bonus (ONLY ONCE)
+    welcome = await give_welcome_bonus(user.id)
 
     msg = await update.message.reply_text(f"👋 HELLO {username}")
 
@@ -102,93 +95,151 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await msg.edit_text("⚡ LOADING...")
     await asyncio.sleep(1)
 
-    join_buttons = []
-
+    buttons = []
     for c in CHANNELS:
-        join_buttons.append([InlineKeyboardButton(c["name"], url=c["link"])])
+        buttons.append([InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])])
 
-    join_buttons.append([InlineKeyboardButton(GROUP["name"], url=GROUP["link"])])
-    join_buttons.append([InlineKeyboardButton("✅ DONE JOINING", callback_data="check_join")])
+    buttons.append([InlineKeyboardButton(f"💬 {GROUP['name']}", url=GROUP["link"])])
+    buttons.append([InlineKeyboardButton("✅ DONE JOINING", callback_data="check_join")])
 
     await msg.edit_text(
-        "⚠️ JOIN CHANNELS TO CONTINUE",
-        reply_markup=InlineKeyboardMarkup(join_buttons)
+        "⚠ JOIN CHANNELS FIRST",
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
+    context.user_data["referrer_id"] = referrer_id
 
-# ==========================================
-# BUTTONS
-# ==========================================
+
+# ================= BUTTONS =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    query = update.callback_query
-    user_id = query.from_user.id
-    await query.answer()
+    q = update.callback_query
+    user_id = q.from_user.id
+    username = q.from_user.first_name
 
-    # JOIN CHECK
-    if query.data == "check_join":
+    await q.answer()
 
-        joined = await check_force_join(user_id, context.bot)
 
-        if not joined:
-            await query.message.edit_text("❌ JOIN ALL CHANNELS FIRST")
+    # ===== JOIN CHECK =====
+    if q.data == "check_join":
+
+        if not await check_force_join(user_id, context.bot):
+            await q.message.edit_text("❌ JOIN ALL CHANNELS FIRST")
             return
 
-        await query.message.edit_text("✅ VERIFIED SUCCESS")
+        await q.message.edit_text("✅ VERIFIED")
 
-        # REFERRAL ONLY AFTER JOIN
-        referrer_id = context.user_data.get("referrer_id")
+        ref = context.user_data.get("referrer_id")
 
-        if referrer_id and referrer_id != user_id:
+        if ref and ref != user_id:
 
-            result, name = await add_referral(referrer_id, user_id)
+            res = await add_referral(ref, user_id, username)
 
-            if result == "success":
-                await context.bot.send_message(referrer_id, f"🎉 NEW USER: {name}\n+10 TICKETS")
-                await context.bot.send_message(user_id, "🎉 +5 TICKETS RECEIVED")
+            if res == "success":
 
-            elif result == "already":
-                await context.bot.send_message(user_id, "⚠️ REFERRAL ALREADY USED")
+                try:
+                    await context.bot.send_message(
+                        ref,
+                        f"🎉 NEW REFERRAL: {username}\n🎟 +10 TICKETS"
+                    )
+                except:
+                    pass
 
-        await open_main_menu(query.message, user_id)
+                await context.bot.send_message(
+                    user_id,
+                    "🎉 YOU GOT +5 TICKETS"
+                )
+
+            elif res == "already":
+                await context.bot.send_message(
+                    user_id,
+                    "⚠ ALREADY USED REFERRAL"
+                )
+
+        await open_main_menu(q.message, user_id)
 
 
-    elif query.data == "myinfo":
-        t = await get_tickets(user_id)
-        await query.message.edit_text(f"👤 INFO\n🎟️ {t}")
+    # ===== MY INFO =====
+    elif q.data == "myinfo":
+
+        tickets = await get_tickets(user_id)
+
+        link = f"https://t.me/{context.bot.username}?start={user_id}"
+
+        await q.message.edit_text(
+            f"👤 {username}\n🎟 {tickets}\n🔗 {link}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
 
 
-    elif query.data == "leaderboard":
+    # ===== LEADERBOARD =====
+    elif q.data == "leaderboard":
+
         users = await top_users()
+
         text = "🏆 TOP USERS\n\n"
         i = 1
+
         for u in users:
             text += f"{i}. {u[0]} ➜ {u[1]}\n"
             i += 1
 
-        await query.message.edit_text(text)
+        await q.message.edit_text(
+            text,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
 
 
-    elif query.data == "bonus":
-        res = await claim_daily_bonus(user_id)
+    # ===== DAILY BONUS =====
+    elif q.data == "bonus":
 
-        if res == "success":
+        r = await claim_daily_bonus(user_id)
+
+        if r == "success":
             txt = "🎉 +2 TICKETS"
-        elif res == "already":
-            txt = "⚠️ ALREADY CLAIMED"
+        elif r == "already":
+            txt = "⚠ ALREADY CLAIMED (RESET AT 12AM)"
         else:
             txt = "❌ ERROR"
 
-        await query.message.edit_text(txt)
+        await q.message.edit_text(
+            txt,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
 
 
-    elif query.data == "back":
-        await open_main_menu(query.message, user_id)
+    # ===== REDEEM =====
+    elif q.data == "redeem":
+        await q.message.edit_text(
+            "🎁 REDEEM COMING SOON",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
 
 
-# ==========================================
-# HANDLER
-# ==========================================
+    # ===== REWARD =====
+    elif q.data == "reward":
+        await q.message.edit_text(
+            "🏆 REWARD COMING SOON",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
+        )
+
+
+    # ===== BACK =====
+    elif q.data == "back":
+        await open_main_menu(q.message, user_id)
+
+
+# ================= HANDLERS =================
 def get_handlers():
     return [
         CommandHandler("start", start),
