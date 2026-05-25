@@ -12,7 +12,8 @@ from telegram.ext import (
 
 from database.users import (
     add_user,
-    get_tickets
+    get_tickets,
+    get_top_users
 )
 
 import asyncio
@@ -351,6 +352,49 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔗 REFER LINK:\n"
             f"{refer_link}",
 
+            reply_markup=reply_markup
+        )
+
+    # ======================================
+    # LEADERBOARD
+    # ======================================
+
+    elif query.data == "leaderboard":
+
+        top_users = await get_top_users()
+
+        text = "🏆 TOP 15 USERS\n\n"
+
+        rank = 1
+
+        for user in top_users:
+
+            username = user[0]
+            tickets = user[1]
+
+            if not username:
+                username = "Unknown User"
+
+            text += (
+                f"{rank}. {username} ➜ 🎟️ {tickets}\n"
+            )
+
+            rank += 1
+
+        buttons = [
+
+            [
+                InlineKeyboardButton(
+                    "🔙 BACK",
+                    callback_data="back"
+                )
+            ]
+        ]
+
+        reply_markup = InlineKeyboardMarkup(buttons)
+
+        await query.message.edit_text(
+            text,
             reply_markup=reply_markup
         )
 
