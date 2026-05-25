@@ -105,16 +105,14 @@ async def open_main_menu(message, user_id):
         ]
     ]
 
-    reply_markup = InlineKeyboardMarkup(buttons)
-
     await message.edit_text(
         f"🎟️ WELCOME TO SF GIVEAWAY PANEL\n\n🎫 YOUR TICKETS: {tickets}",
-        reply_markup=reply_markup
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
 
 # ==========================================
-# START COMMAND (WITH REFERRAL SYSTEM)
+# START COMMAND (REFERRAL FIXED)
 # ==========================================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -123,7 +121,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     username = f"@{user.username}" if user.username else user.first_name
 
-    # referral
+    # referral id
     referrer_id = None
     if context.args:
         try:
@@ -134,21 +132,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # save user
     await add_user(user.id, username)
 
-    # referral system
+    # ==========================================
+    # REFERRAL SYSTEM (FIXED BLOCK)
+    # ==========================================
+
     if referrer_id and referrer_id != user.id:
 
-        referred = await add_referral(referrer_id, user.id)
+        result = await add_referral(referrer_id, user.id)
 
-        if referred:
+        if result == "success":
 
             try:
                 await context.bot.send_message(
                     chat_id=referrer_id,
-                    text=(
-                        f"🎉 NEW REFERRAL JOINED\n\n"
-                        f"👤 USER: {username}\n"
-                        f"🎟️ YOU GOT +10 TICKETS"
-                    )
+                    text="🎉 NEW REFERRAL JOINED\n🎟️ +10 TICKETS"
                 )
             except:
                 pass
@@ -156,18 +153,29 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 await context.bot.send_message(
                     chat_id=user.id,
-                    text=(
-                        f"🎉 REFER BONUS RECEIVED\n\n"
-                        f"🎟️ YOU GOT +5 TICKETS"
-                    )
+                    text="🎉 REFER BONUS RECEIVED\n🎟️ +5 TICKETS"
                 )
             except:
                 pass
 
-    # greeting
+
+        elif result == "already":
+
+            try:
+                await context.bot.send_message(
+                    chat_id=user.id,
+                    text="⚠️ REFERRAL ALREADY USED\n🎟️ BONUS ALREADY CLAIMED (ONE TIME ONLY)"
+                )
+            except:
+                pass
+
+    # ==========================================
+    # WELCOME MESSAGE
+    # ==========================================
+
     msg = await update.message.reply_text(f"👋 HELLO {username}")
 
-    await asyncio.sleep(1.5)
+    await asyncio.sleep(1)
 
     await msg.edit_text("⚡ LOADING...")
     await asyncio.sleep(1)
@@ -194,16 +202,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         InlineKeyboardButton("✅ DONE JOINING", callback_data="check_join")
     ])
 
-    reply_markup = InlineKeyboardMarkup(join_buttons)
-
     await msg.edit_text(
         "⚠️ JOIN ALL CHANNELS & GROUP TO CONTINUE ⚠️",
-        reply_markup=reply_markup
+        reply_markup=InlineKeyboardMarkup(join_buttons)
     )
 
 
 # ==========================================
-# BUTTON HANDLER
+# CALLBACK HANDLER
 # ==========================================
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -227,33 +233,17 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if joined:
 
             await query.message.edit_text(
-                "✅ VERIFIED SUCCESSFULLY 🔥\n\n🎉 YOU JOINED ALL CHANNELS & GROUP"
+                "✅ VERIFIED SUCCESSFULLY 🔥\n\n🎉 ALL CHANNELS JOINED"
             )
 
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
 
             await open_main_menu(query.message, user_id)
 
         else:
 
-            join_buttons = []
-
-            for channel in CHANNELS:
-                join_buttons.append([
-                    InlineKeyboardButton(f"📢 {channel['name']}", url=channel["link"])
-                ])
-
-            join_buttons.append([
-                InlineKeyboardButton(f"💬 {GROUP['name']}", url=GROUP["link"])
-            ])
-
-            join_buttons.append([
-                InlineKeyboardButton("✅ DONE JOINING", callback_data="check_join")
-            ])
-
             await query.message.edit_text(
-                "❌ AAPNE ABHI TAK SAB CHANNELS YA GROUP JOIN NAHI KIYE",
-                reply_markup=InlineKeyboardMarkup(join_buttons)
+                "❌ PLEASE JOIN ALL CHANNELS FIRST"
             )
 
     # MY INFO
@@ -283,10 +273,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = "🏆 TOP 15 USERS\n\n"
 
         rank = 1
-        for user in users:
-            username = user[0] or "Unknown User"
-            tickets = user[1]
-            text += f"{rank}. {username} ➜ 🎟️ {tickets}\n"
+        for u in users:
+            name = u[0] or "Unknown User"
+            tickets = u[1]
+            text += f"{rank}. {name} ➜ 🎟️ {tickets}\n"
             rank += 1
 
         await query.message.edit_text(
@@ -302,9 +292,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         claimed = await claim_bonus(user_id)
 
         if claimed:
-            text = "🎉 DAILY BONUS CLAIMED\n\n🎟️ YOU GOT 2 TICKETS"
+            text = "🎉 DAILY BONUS CLAIMED\n🎟️ +2 TICKETS"
         else:
-            text = "⚠️ YOU ALREADY CLAIMED TODAY BONUS"
+            text = "⚠️ ALREADY CLAIMED TODAY"
 
         await query.message.edit_text(
             text,
