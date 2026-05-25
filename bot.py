@@ -6,25 +6,37 @@ from handlers.start import get_handlers
 
 from database.db import init_db
 
+
+# ==========================================
+# DATABASE INIT
+# ==========================================
+
 import asyncio
 
-
-async def main():
-
-    # DATABASE
-    await init_db()
-
-    # BOT
-    app = ApplicationBuilder().token(TOKEN).build()
-
-    # HANDLERS
-    for handler in get_handlers():
-
-        app.add_handler(handler)
-
-    print("BOT RUNNING...")
-
-    app.run_polling()
+asyncio.run(init_db())
 
 
-asyncio.run(main())
+# ==========================================
+# BOT
+# ==========================================
+
+app = ApplicationBuilder().token(TOKEN).build()
+
+
+# ==========================================
+# HANDLERS
+# ==========================================
+
+for handler in get_handlers():
+
+    app.add_handler(handler)
+
+
+print("BOT RUNNING...")
+
+
+# ==========================================
+# START BOT
+# ==========================================
+
+app.run_polling()
