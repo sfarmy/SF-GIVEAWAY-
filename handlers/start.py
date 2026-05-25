@@ -13,7 +13,8 @@ from telegram.ext import (
 from database.db import (
     add_user,
     get_tickets,
-    top_users
+    top_users,
+    claim_bonus
 )
 
 import asyncio
@@ -361,13 +362,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == "leaderboard":
 
-        top_users = await get_top_users()
+        users = await top_users()
 
         text = "🏆 TOP 15 USERS\n\n"
 
         rank = 1
 
-        for user in top_users:
+        for user in users:
 
             username = user[0]
             tickets = user[1]
@@ -397,6 +398,45 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text,
             reply_markup=reply_markup
         )
+
+    # ======================================
+    # BONUS
+    # ======================================
+
+    elif query.data == "bonus":
+
+        claimed = await claim_bonus(user_id)
+
+        buttons = [
+
+            [
+                InlineKeyboardButton(
+                    "🔙 BACK",
+                    callback_data="back"
+                )
+            ]
+        ]
+
+        reply_markup = InlineKeyboardMarkup(buttons)
+
+        if claimed:
+
+            await query.message.edit_text(
+
+                "🎉 DAILY BONUS CLAIMED\n\n"
+                "🎟️ YOU GOT 2 TICKETS",
+
+                reply_markup=reply_markup
+            )
+
+        else:
+
+            await query.message.edit_text(
+
+                "⚠️ YOU ALREADY CLAIMED TODAY BONUS",
+
+                reply_markup=reply_markup
+            )
 
     # ======================================
     # BACK
