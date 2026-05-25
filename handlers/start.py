@@ -112,13 +112,12 @@ async def open_main_menu(message, user_id):
 
 
 # ==========================================
-# START COMMAND (REFERRAL FIXED)
+# START COMMAND
 # ==========================================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
-
     username = f"@{user.username}" if user.username else user.first_name
 
     # referral id
@@ -132,47 +131,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # save user
     await add_user(user.id, username)
 
-    # ==========================================
-    # REFERRAL SYSTEM (FIXED BLOCK)
-    # ==========================================
-
-    if referrer_id and referrer_id != user.id:
-
-        result = await add_referral(referrer_id, user.id)
-
-        if result == "success":
-
-            try:
-                await context.bot.send_message(
-                    chat_id=referrer_id,
-                    text="🎉 NEW REFERRAL JOINED\n🎟️ +10 TICKETS"
-                )
-            except:
-                pass
-
-            try:
-                await context.bot.send_message(
-                    chat_id=user.id,
-                    text="🎉 REFER BONUS RECEIVED\n🎟️ +5 TICKETS"
-                )
-            except:
-                pass
-
-
-        elif result == "already":
-
-            try:
-                await context.bot.send_message(
-                    chat_id=user.id,
-                    text="⚠️ REFERRAL ALREADY USED\n🎟️ BONUS ALREADY CLAIMED (ONE TIME ONLY)"
-                )
-            except:
-                pass
-
-    # ==========================================
-    # WELCOME MESSAGE
-    # ==========================================
-
+    # greeting
     msg = await update.message.reply_text(f"👋 HELLO {username}")
 
     await asyncio.sleep(1)
@@ -207,6 +166,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(join_buttons)
     )
 
+    # store referrer temporarily in context
+    context.user_data["referrer_id"] = referrer_id
+
 
 # ==========================================
 # CALLBACK HANDLER
@@ -219,7 +181,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.answer()
 
+    # ==========================================
     # CHECK JOIN
+    # ==========================================
+
     if query.data == "check_join":
 
         await query.message.edit_text("🔍 CHECKING JOIN STATUS...")
@@ -232,21 +197,65 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if joined:
 
-            await query.message.edit_text(
-                "✅ VERIFIED SUCCESSFULLY 🔥\n\n🎉 ALL CHANNELS JOINED"
-            )
+            await query.message.edit_text("✅ VERIFIED SUCCESSFULLY 🔥")
+
+            # ==========================================
+            # REFERRAL ONLY AFTER JOIN
+            # ==========================================
+
+            referrer_id = context.user_data.get("referrer_id")
+
+            if referrer_id and referrer_id != user_id:
+
+                result = await add_referral(referrer_id, user_id)
+
+                if result == "success":
+
+                    try:
+                        await context.bot.send_message(
+                            chat_id=referrer_id,
+                            text=(
+                                "🎉 NEW USER JOINED\n"
+                                f"👤 {query.from_user.first_name}\n"
+                                "🎟️ +10 TICKETS"
+                            )
+                        )
+                    except:
+                        pass
+
+                    try:
+                        await context.bot.send_message(
+                            chat_id=user_id,
+                            text="🎉 WELCOME BONUS RECEIVED\n🎟️ +5 TICKETS"
+                        )
+                    except:
+                        pass
+
+
+                elif result == "already":
+
+                    try:
+                        await context.bot.send_message(
+                            chat_id=user_id,
+                            text="⚠️ WELCOME BONUS ALREADY CLAIMED (ONE TIME ONLY)"
+                        )
+                    except:
+                        pass
 
             await asyncio.sleep(1)
-
             await open_main_menu(query.message, user_id)
 
         else:
 
             await query.message.edit_text(
-                "❌ PLEASE JOIN ALL CHANNELS FIRST"
+                "❌ PLEASE JOIN ALL CHANNELS & GROUP FIRST"
             )
 
+
+    # ==========================================
     # MY INFO
+    # ==========================================
+
     elif query.data == "myinfo":
 
         tickets = await get_tickets(user_id)
@@ -265,7 +274,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
 
+
+    # ==========================================
     # LEADERBOARD
+    # ==========================================
+
     elif query.data == "leaderboard":
 
         users = await top_users()
@@ -286,7 +299,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
 
+
+    # ==========================================
     # BONUS
+    # ==========================================
+
     elif query.data == "bonus":
 
         claimed = await claim_bonus(user_id)
@@ -294,7 +311,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if claimed:
             text = "🎉 DAILY BONUS CLAIMED\n🎟️ +2 TICKETS"
         else:
-            text = "⚠️ ALREADY CLAIMED TODAY"
+            text = "⚠️ WELCOME BONUS ALREADY CLAIMED (ONE TIME ONLY)"
 
         await query.message.edit_text(
             text,
@@ -303,7 +320,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
 
+
+    # ==========================================
     # BACK
+    # ==========================================
+
     elif query.data == "back":
         await open_main_menu(query.message, user_id)
 
