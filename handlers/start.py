@@ -10,10 +10,10 @@ from telegram.ext import (
     ContextTypes
 )
 
-from database.users import (
+from database.db import (
     add_user,
     get_tickets,
-    get_top_users
+    top_users
 )
 
 import asyncio
