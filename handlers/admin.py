@@ -1,9 +1,9 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackQueryHandler, ContextTypes
-from database.db import get_user, add_tickets, get_tickets
+from telegram.ext import CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 import aiosqlite
 
-# ================= ADMIN IDS =================
+DB_NAME = "database.db"
+
 ADMIN_IDS = [7305665779, 7331380618]
 
 
@@ -11,23 +11,16 @@ def is_admin(user_id):
     return user_id in ADMIN_IDS
 
 
-DB_NAME = "database.db"
-
-
 # ================= ADMIN PANEL =================
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    user_id = update.effective_user.id
-
-    if not is_admin(user_id):
-        await update.message.reply_text("❌ Not Authorized")
+    if not is_admin(update.effective_user.id):
         return
 
     buttons = [
-        [InlineKeyboardButton("👤 User Management", callback_data="adm_user")],
-        [InlineKeyboardButton("🎁 Redeem System", callback_data="adm_redeem")],
-        [InlineKeyboardButton("📢 Broadcast", callback_data="adm_broadcast")],
-        [InlineKeyboardButton("✉️ Send User Msg", callback_data="adm_msg")]
+        [InlineKeyboardButton("🎟 REDEEM CODES", callback_data="adm_redeem")],
+        [InlineKeyboardButton("📢 BROADCAST", callback_data="adm_broadcast")],
+        [InlineKeyboardButton("✉️ SEND USER MSG", callback_data="adm_msg")]
     ]
 
     await update.message.reply_text(
@@ -36,93 +29,91 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ================= CALLBACK HANDLER =================
+# ================= CALLBACK =================
 async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
     user_id = q.from_user.id
 
     if not is_admin(user_id):
-        await q.answer("Not allowed", show_alert=True)
         return
 
     await q.answer()
 
+    data = q.data
 
-    # ===== USER MANAGEMENT =====
-    if q.data == "adm_user":
+
+    # ================= REDEEM MENU =================
+    if data == "adm_redeem":
+
         await q.message.edit_text(
-            "👤 USER MANAGEMENT",
+            "🎟 REDEEM SYSTEM",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("➕ Add Tickets", callback_data="add_t")],
-                [InlineKeyboardButton("➖ Remove Tickets", callback_data="rem_t")],
-                [InlineKeyboardButton("🚫 Ban (Coming)", callback_data="ban")],
-                [InlineKeyboardButton("🔙 BACK", callback_data="adm_back")]
+                [InlineKeyboardButton("➕ CREATE CODE", callback_data="create_code")],
+                [InlineKeyboardButton("📋 LIST CODES", callback_data="list_code")]
             ])
         )
 
 
-    # ===== REDEEM SYSTEM =====
-    elif q.data == "adm_redeem":
+    # ================= BROADCAST =================
+    elif data == "adm_broadcast":
+
         await q.message.edit_text(
-            "🎁 REDEEM SYSTEM\n\n(Coming Fully Next Update)",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 BACK", callback_data="adm_back")]
-            ])
+            "📢 SEND BROADCAST\n\nType:\n/broadcast YOUR MESSAGE"
         )
 
 
-    # ===== BROADCAST =====
-    elif q.data == "adm_broadcast":
+    # ================= SEND USER MESSAGE =================
+    elif data == "adm_msg":
+
         await q.message.edit_text(
-            "📢 BROADCAST MODE\n\nUse: /broadcast YOUR_MESSAGE",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 BACK", callback_data="adm_back")]
-            ])
+            "✉️ SEND MESSAGE TO USER\n\nType:\n/msg USER_ID YOUR MESSAGE"
         )
 
 
-    # ===== SEND MESSAGE =====
-    elif q.data == "adm_msg":
-        await q.message.edit_text(
-            "✉️ SEND MESSAGE TO USER\n\nUse: /msg USER_ID MESSAGE",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 BACK", callback_data="adm_back")]
-            ])
-        )
+# ================= BROADCAST COMMAND =================
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    if not is_admin(update.effective_user.id):
+        return
 
-    # ===== BACK =====
-    elif q.data == "adm_back":
-        await admin_panel(update, context)
-
-
-# ================= BROADCAST =================
-async def broadcast(bot, text):
+    text = " ".join(context.args)
 
     async with aiosqlite.connect(DB_NAME) as db:
-        cur = await db.execute("SELECT user_id FROM users")
-        users = await cur.fetchall()
+        users = await db.execute("SELECT user_id FROM users")
+        users = await users.fetchall()
 
         for u in users:
             try:
-                await bot.send_message(u[0], text)
+                await context.bot.send_message(u[0], text)
             except:
                 pass
 
+    await update.message.reply_text("✅ BROADCAST SENT")
 
-# ================= SEND MESSAGE =================
-async def send_user_msg(bot, user_id, text):
+
+# ================= SEND USER MESSAGE =================
+async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not is_admin(update.effective_user.id):
+        return
+
     try:
-        await bot.send_message(chat_id=user_id, text=text)
-        return True
+        user_id = int(context.args[0])
+        text = " ".join(context.args[1:])
+
+        await context.bot.send_message(user_id, text)
+        await update.message.reply_text("✅ MESSAGE SENT")
+
     except:
-        return False
+        await update.message.reply_text("❌ FORMAT: /msg USER_ID TEXT")
 
 
 # ================= HANDLERS =================
 def get_admin_handlers():
     return [
         CommandHandler("admin", admin_panel),
+        CommandHandler("broadcast", broadcast),
+        CommandHandler("msg", msg_user),
         CallbackQueryHandler(admin_buttons)
     ]
