@@ -1,4 +1,4 @@
 python-telegram-bot==20.7
 aiosqlite
 httpx==0.25.2
-pytz
+pytz>=2024.1
