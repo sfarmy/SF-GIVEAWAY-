@@ -27,8 +27,8 @@ from database.db import (
     get_user_rank
 )
 
-# 👇 IMPORT YOUR REWARDS FILE
-from handlers.reward import get_reward_handlers
+from handlers.reward import get_reward_handlers, rewards_menu
+
 import asyncio
 
 
@@ -43,7 +43,6 @@ CHANNELS = [
 
 GROUP = {"name": "SF TOOL GC", "link": "https://t.me/sf_reset", "id": -1002708620916}
 
-# ================= STATE =================
 user_state = {}
 
 
@@ -73,7 +72,10 @@ async def check_force_join(user_id, bot):
 # ================= JOIN BUTTONS =================
 def get_join_buttons(channels):
 
-    buttons = [[InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])] for c in channels]
+    buttons = [
+        [InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])]
+        for c in channels
+    ]
 
     buttons.append([
         InlineKeyboardButton("✅ VERIFY JOIN", callback_data="check_join")
@@ -102,7 +104,7 @@ async def open_main_menu(message, user_id):
     ]
 
     await message.edit_text(
-        f"🎟️ WELCOME TO SF GIVEAWAY PANEL\n\n🎫 YOUR TICKETS: {tickets}",
+        f"🎟️ WELCOME PANEL\n\n🎫 YOUR TICKETS: {tickets}",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
@@ -158,6 +160,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await q.answer()
     data = q.data
 
+
     # JOIN CHECK
     if data == "check_join":
 
@@ -201,7 +204,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text(
             text,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
         )
         return
 
@@ -230,7 +235,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text(
             text,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
         )
         return
 
@@ -239,11 +246,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
+
         txt = "🎉 +2 TICKETS ADDED" if r == "success" else "⚠️ ALREADY CLAIMED"
 
         await q.message.edit_text(
             txt,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
         )
         return
 
@@ -255,15 +265,16 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text(
             "🎁 SEND CODE",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 BACK", callback_data="back")]
+            ])
         )
         return
 
 
-    # 🔥 REWARDS (FIXED HERE)
+    # ⭐ REWARDS FIXED
     if data == "rewards_menu":
-
-        await show_rewards(update, context)
+        await rewards_menu(update, context)
         return
 
 
@@ -277,6 +288,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
+        return
+
+    if not update.message:
         return
 
     user_id = update.effective_user.id
