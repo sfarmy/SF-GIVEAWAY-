@@ -344,3 +344,16 @@ async def get_redeem_logs():
         """)
 
         return await cur.fetchall()
+
+
+# ================= GET ALL USERS =================
+async def get_all_users():
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute("""
+            SELECT user_id
+            FROM users
+        """)
+
+        return await cur.fetchall()
