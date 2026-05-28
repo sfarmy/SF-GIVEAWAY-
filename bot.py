@@ -1,6 +1,7 @@
 import asyncio
 import os
 from datetime import time
+import pytz
 
 from telegram.ext import ApplicationBuilder
 
@@ -14,6 +15,8 @@ from database.db import init_db, DB_NAME, get_total_users, get_total_tickets
 
 
 ADMIN_IDS = [7305665779, 7331380618]
+
+INDIA = pytz.timezone("Asia/Kolkata")
 
 
 # ================= DAILY REPORT =================
@@ -46,7 +49,7 @@ def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # handlers
+    # ================= HANDLERS =================
     for handler in get_admin_handlers():
         app.add_handler(handler)
 
@@ -56,10 +59,10 @@ def main():
     for handler in get_reward_handlers():
         app.add_handler(handler)
 
-    # ================= JOB SCHEDULER (IST 12 AM) =================
+    # ================= AUTO DAILY JOB (12 AM IST) =================
     app.job_queue.run_daily(
         daily_report,
-        time=time(hour=18, minute=30)  # UTC = 00:00 IST
+        time=time(hour=0, minute=0, tzinfo=INDIA)
     )
 
     print("🤖 BOT RUNNING...")
