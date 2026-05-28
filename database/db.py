@@ -6,6 +6,7 @@ DB_NAME = "database.db"
 
 # ================= INIT DB =================
 async def init_db():
+
     async with aiosqlite.connect(DB_NAME) as db:
 
         # USERS
@@ -154,23 +155,19 @@ async def add_referral(referrer_id, user_id):
         if not row or row[0] == 1:
             return "already"
 
-        # mark used
+        # mark referral used
         await db.execute(
             "UPDATE users SET referral_used=1 WHERE user_id=?",
             (user_id,)
         )
 
-        # referrer gets +10
-        await db.execute(
-            "UPDATE users SET tickets=tickets+10 WHERE user_id=?",
-            (referrer_id,)
-        )
-
-        # referrals count
-        await db.execute(
-            "UPDATE users SET referrals=referrals+1 WHERE user_id=?",
-            (referrer_id,)
-        )
+        # add 10 tickets to referrer
+        await db.execute("""
+            UPDATE users
+            SET tickets=tickets+10,
+                referrals=referrals+1
+            WHERE user_id=?
+        """, (referrer_id,))
 
         await db.commit()
 
@@ -210,7 +207,7 @@ async def claim_daily_bonus(user_id):
         return "success"
 
 
-# ================= REDEEM CREATE =================
+# ================= CREATE REDEEM =================
 async def create_redeem_code(code, reward, uses):
 
     async with aiosqlite.connect(DB_NAME) as db:
@@ -230,7 +227,8 @@ async def already_claimed_code(user_id, code):
     async with aiosqlite.connect(DB_NAME) as db:
 
         cur = await db.execute("""
-            SELECT * FROM redeem_used
+            SELECT *
+            FROM redeem_used
             WHERE user_id=? AND code=?
         """, (user_id, code))
 
@@ -253,14 +251,29 @@ async def save_claim_history(user_id, username, code):
         await db.commit()
 
 
+# ================= SAVE REDEEM CLAIM =================
+async def save_redeem_claim(user_id, username, code):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        await db.execute("""
+            INSERT INTO redeem_logs
+            (user_id, username, code)
+            VALUES (?, ?, ?)
+        """, (user_id, username, code))
+
+        await db.commit()
+
+
 # ================= USE REDEEM =================
 async def use_redeem_code(user_id, username, code):
 
     async with aiosqlite.connect(DB_NAME) as db:
 
-        # already used check
+        # already used
         cur = await db.execute("""
-            SELECT * FROM redeem_used
+            SELECT *
+            FROM redeem_used
             WHERE user_id=? AND code=?
         """, (user_id, code))
 
@@ -269,7 +282,7 @@ async def use_redeem_code(user_id, username, code):
         if already:
             return "used"
 
-        # code check
+        # check code
         cur = await db.execute("""
             SELECT reward, uses_left
             FROM redeem_codes
