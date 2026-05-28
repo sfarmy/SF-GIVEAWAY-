@@ -1,19 +1,13 @@
 import aiosqlite
 import time
 import os
-import shutil
-from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "database.db")
-BACKUP_FOLDER = os.path.join(BASE_DIR, "backups")
 
 
 # ================= INIT DB =================
 async def init_db():
-
-    if not os.path.exists(BACKUP_FOLDER):
-        os.makedirs(BACKUP_FOLDER)
 
     async with aiosqlite.connect(DB_NAME) as db:
 
@@ -57,7 +51,7 @@ async def init_db():
         await db.commit()
 
 
-# ================= ADD USER (FIXED - IMPORTANT) =================
+# ================= ADD USER =================
 async def add_user(user_id, username):
 
     async with aiosqlite.connect(DB_NAME) as db:
@@ -66,24 +60,13 @@ async def add_user(user_id, username):
             "SELECT user_id FROM users WHERE user_id=?",
             (user_id,)
         )
-
         row = await cur.fetchone()
 
         if not row:
             await db.execute("""
-                INSERT INTO users (
-                    user_id,
-                    username,
-                    tickets,
-                    referrals,
-                    welcome_used,
-                    referral_used,
-                    last_bonus_day,
-                    is_banned
-                )
-                VALUES (?, ?, 0, 0, 0, 0, 0, 0)
+                INSERT INTO users (user_id, username)
+                VALUES (?, ?)
             """, (user_id, username))
-
         else:
             await db.execute("""
                 UPDATE users
@@ -103,7 +86,6 @@ async def get_tickets(user_id):
             "SELECT tickets FROM users WHERE user_id=?",
             (user_id,)
         )
-
         row = await cur.fetchone()
 
         return row[0] if row else 0
@@ -133,7 +115,129 @@ async def get_all_users():
         return await cur.fetchall()
 
 
-# ================= CREATE REDEEM =================
+# ================= TOTAL TICKETS =================
+async def get_total_tickets():
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute("SELECT SUM(tickets) FROM users")
+        row = await cur.fetchone()
+        return row[0] or 0
+
+
+# ================= USER RANK =================
+async def get_user_rank(user_id):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT tickets FROM users WHERE user_id=?",
+            (user_id,)
+        )
+        row = await cur.fetchone()
+
+        if not row:
+            return 0
+
+        tickets = row[0]
+
+        cur = await db.execute(
+            "SELECT COUNT(*) FROM users WHERE tickets > ?",
+            (tickets,)
+        )
+        higher = await cur.fetchone()
+
+        return higher[0] + 1
+
+
+# ================= WELCOME BONUS =================
+async def give_welcome_bonus(user_id):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT welcome_used FROM users WHERE user_id=?",
+            (user_id,)
+        )
+        row = await cur.fetchone()
+
+        if row and row[0] == 1:
+            return "already"
+
+        await db.execute("""
+            UPDATE users
+            SET tickets = tickets + 15,
+                welcome_used = 1
+            WHERE user_id=?
+        """, (user_id,))
+
+        await db.commit()
+        return "success"
+
+
+# ================= ADD REFERRAL =================
+async def add_referral(referrer_id, user_id):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT referral_used FROM users WHERE user_id=?",
+            (user_id,)
+        )
+        row = await cur.fetchone()
+
+        if row and row[0] == 1:
+            return "already"
+
+        await db.execute("""
+            UPDATE users
+            SET referral_used = 1
+            WHERE user_id=?
+        """, (user_id,))
+
+        await db.execute("""
+            UPDATE users
+            SET tickets = tickets + 10,
+                referrals = referrals + 1
+            WHERE user_id=?
+        """, (referrer_id,))
+
+        await db.commit()
+        return "success"
+
+
+# ================= DAILY BONUS =================
+def get_today():
+    return int(time.time() // 86400)
+
+
+async def claim_daily_bonus(user_id):
+
+    today = get_today()
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT last_bonus_day FROM users WHERE user_id=?",
+            (user_id,)
+        )
+        row = await cur.fetchone()
+
+        if row and row[0] == today:
+            return "already"
+
+        await db.execute("""
+            UPDATE users
+            SET tickets = tickets + 2,
+                last_bonus_day = ?
+            WHERE user_id=?
+        """, (today, user_id))
+
+        await db.commit()
+        return "success"
+
+
+# ================= REDEEM CODE =================
 async def create_redeem_code(code, reward, uses, total_uses):
 
     async with aiosqlite.connect(DB_NAME) as db:
@@ -147,40 +251,22 @@ async def create_redeem_code(code, reward, uses, total_uses):
         await db.commit()
 
 
-# ================= LIST REDEEM =================
-async def list_redeem_codes():
-
-    async with aiosqlite.connect(DB_NAME) as db:
-
-        cur = await db.execute("""
-            SELECT code, reward, uses_left, total_uses
-            FROM redeem_codes
-        """)
-
-        return await cur.fetchall()
-
-
 # ================= USE REDEEM =================
 async def use_redeem_code(user_id, username, code):
 
     async with aiosqlite.connect(DB_NAME) as db:
 
-        # already used check
-        cur = await db.execute("""
-            SELECT 1 FROM redeem_used
-            WHERE user_id=? AND code=?
-        """, (user_id, code))
-
+        cur = await db.execute(
+            "SELECT 1 FROM redeem_used WHERE user_id=? AND code=?",
+            (user_id, code)
+        )
         if await cur.fetchone():
             return "used"
 
-        # get code
-        cur = await db.execute("""
-            SELECT reward, uses_left
-            FROM redeem_codes
-            WHERE code=?
-        """, (code,))
-
+        cur = await db.execute(
+            "SELECT reward, uses_left FROM redeem_codes WHERE code=?",
+            (code,)
+        )
         row = await cur.fetchone()
 
         if not row:
@@ -191,40 +277,29 @@ async def use_redeem_code(user_id, username, code):
         if uses_left <= 0:
             return "expired"
 
-        # add tickets
         await db.execute("""
             UPDATE users
             SET tickets = tickets + ?
             WHERE user_id=?
         """, (reward, user_id))
 
-        # decrease uses
         await db.execute("""
             UPDATE redeem_codes
             SET uses_left = uses_left - 1
             WHERE code=?
         """, (code,))
 
-        # mark used
         await db.execute("""
             INSERT INTO redeem_used (user_id, code)
             VALUES (?, ?)
         """, (user_id, code))
 
-        # logs (no duplicates)
-        cur = await db.execute("""
-            SELECT 1 FROM redeem_logs
-            WHERE user_id=? AND code=?
-        """, (user_id, code))
-
-        if not await cur.fetchone():
-            await db.execute("""
-                INSERT INTO redeem_logs (user_id, username, code)
-                VALUES (?, ?, ?)
-            """, (user_id, username, code))
+        await db.execute("""
+            INSERT INTO redeem_logs (user_id, username, code)
+            VALUES (?, ?, ?)
+        """, (user_id, username, code))
 
         await db.commit()
-
         return reward
 
 
@@ -242,28 +317,35 @@ async def get_redeem_users(code):
         return await cur.fetchall()
 
 
-# ================= RANK SYSTEM (OPTIONAL BUT SAFE) =================
-async def get_user_rank(user_id):
+# ================= CHECK CLAIMED CODE =================
+async def already_claimed_code(user_id, code):
 
     async with aiosqlite.connect(DB_NAME) as db:
 
-        cur = await db.execute(
-            "SELECT tickets FROM users WHERE user_id=?",
-            (user_id,)
-        )
+        cur = await db.execute("""
+            SELECT 1 FROM redeem_used
+            WHERE user_id=? AND code=?
+        """, (user_id, code))
 
-        row = await cur.fetchone()
+        return await cur.fetchone() is not None
 
-        if not row:
-            return 0
 
-        tickets = row[0]
+# ================= SAVE CLAIM HISTORY =================
+async def save_claim_history(user_id, username, code):
+
+    async with aiosqlite.connect(DB_NAME) as db:
 
         cur = await db.execute("""
-            SELECT COUNT(*) FROM users
-            WHERE tickets > ?
-        """, (tickets,))
+            SELECT 1 FROM redeem_logs
+            WHERE user_id=? AND code=?
+        """, (user_id, code))
 
-        higher = await cur.fetchone()
+        if await cur.fetchone():
+            return
 
-        return higher[0] + 1
+        await db.execute("""
+            INSERT INTO redeem_logs (user_id, username, code)
+            VALUES (?, ?, ?)
+        """, (user_id, username, code))
+
+        await db.commit()
