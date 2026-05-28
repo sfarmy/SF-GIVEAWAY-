@@ -27,6 +27,9 @@ from database.db import (
     get_user_rank
 )
 
+# 👇 IMPORT YOUR REWARDS FILE
+from handlers.rewards import show_rewards
+
 import asyncio
 
 
@@ -47,6 +50,7 @@ user_state = {}
 
 # ================= FORCE JOIN =================
 async def check_force_join(user_id, bot):
+
     not_joined = []
 
     for c in CHANNELS:
@@ -69,6 +73,7 @@ async def check_force_join(user_id, bot):
 
 # ================= JOIN BUTTONS =================
 def get_join_buttons(channels):
+
     buttons = [[InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])] for c in channels]
 
     buttons.append([
@@ -98,7 +103,7 @@ async def open_main_menu(message, user_id):
     ]
 
     await message.edit_text(
-        f"🎟️ WELCOME PANEL\n\n🎫 YOUR TICKETS: {tickets}",
+        f"🎟️ WELCOME TO SF GIVEAWAY PANEL\n\n🎫 YOUR TICKETS: {tickets}",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
@@ -114,7 +119,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await add_user(user.id, username)
 
-    # referral system
+    # referral
     if context.args:
         try:
             referrer_id = int(context.args[0])
@@ -154,7 +159,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await q.answer()
     data = q.data
 
-    # ================= VERIFY JOIN =================
+    # JOIN CHECK
     if data == "check_join":
 
         not_joined = await check_force_join(user_id, context.bot)
@@ -176,7 +181,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    # ================= MY INFO =================
+    # MY INFO
     if data == "myinfo":
 
         tickets = await get_tickets(user_id)
@@ -202,7 +207,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    # ================= LEADERBOARD =================
+    # LEADERBOARD
     if data == "leaderboard":
 
         users = await top_users()
@@ -231,7 +236,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    # ================= BONUS =================
+    # BONUS
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
@@ -244,7 +249,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    # ================= REDEEM =================
+    # REDEEM
     if data == "redeem":
 
         user_state[user_id] = "redeem"
@@ -256,17 +261,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    # ================= REWARDS =================
+    # 🔥 REWARDS (FIXED HERE)
     if data == "rewards_menu":
 
-        await q.message.edit_text(
-            "🎁 REWARDS SYSTEM\n\nComing Soon 🚀",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
-        )
+        await show_rewards(update, context)
         return
 
 
-    # ================= BACK =================
+    # BACK
     if data == "back":
         await open_main_menu(q.message, user_id)
         return
@@ -276,9 +278,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
-        return
-
-    if not update.message:
         return
 
     user_id = update.effective_user.id
