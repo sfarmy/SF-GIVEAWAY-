@@ -17,7 +17,10 @@ from database.db import (
     give_welcome_bonus,
     use_redeem_code,
     already_claimed_code,
-    save_claim_history
+    save_claim_history,
+    get_total_users,
+    get_total_tickets,
+    get_user_rank
 )
 
 import asyncio
@@ -75,7 +78,6 @@ async def check_force_join(user_id, bot):
 
     not_joined = []
 
-    # CHANNELS
     for c in CHANNELS:
 
         try:
@@ -93,7 +95,6 @@ async def check_force_join(user_id, bot):
 
             not_joined.append(c)
 
-    # GROUP
     try:
 
         member = await bot.get_chat_member(
@@ -190,7 +191,6 @@ async def open_main_menu(message, user_id):
 # ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # NO RESPONSE IN GROUP / CHANNEL
     if update.effective_chat.type != "private":
         return
 
@@ -252,7 +252,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await asyncio.sleep(1)
 
-    # ================= ALWAYS SHOW JOIN PANEL =================
     all_channels = CHANNELS + [GROUP]
 
     await msg.edit_text(
@@ -285,7 +284,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.bot
         )
 
-        # NOT JOINED
         if not_joined:
 
             await q.message.edit_text(
@@ -299,7 +297,6 @@ JOIN REMAINING CHANNELS BELOW
 
             return
 
-        # VERIFIED
         bonus = await give_welcome_bonus(user_id)
 
         if bonus == "success":
@@ -366,7 +363,25 @@ JOIN REMAINING CHANNELS BELOW
 
         users = await top_users()
 
-        text = "🏆 TOP USERS\n\n"
+        total_users = await get_total_users()
+
+        total_tickets = await get_total_tickets()
+
+        user_rank = await get_user_rank(user_id)
+
+        text = f"""
+🏆 GLOBAL LEADERBOARD
+
+👥 TOTAL USERS: {total_users}
+
+🎟 TOTAL TICKETS: {total_tickets}
+
+📊 YOUR RANK: #{user_rank}
+
+
+🔥 TOP 15 USERS
+
+"""
 
         i = 1
 
@@ -464,7 +479,6 @@ FREE100
 # ================= TEXT HANDLER =================
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # NO RESPONSE IN GROUP
     if update.effective_chat.type != "private":
         return
 
