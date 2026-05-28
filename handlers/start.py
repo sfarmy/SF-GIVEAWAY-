@@ -28,7 +28,7 @@ from database.db import (
 )
 
 # 👇 IMPORT YOUR REWARDS FILE
-from handlers.reward import rewards_menu
+from handlers.reward import get_reward_handlers
 import asyncio
 
 
