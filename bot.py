@@ -10,7 +10,12 @@ from handlers.start import get_handlers
 from handlers.admin import get_admin_handlers
 from handlers.reward import get_reward_handlers
 
-from database.db import init_db, DB_NAME, get_total_users, get_total_tickets
+from database.db import (
+    init_db,
+    DB_NAME,
+    get_total_users,
+    get_total_tickets
+)
 
 
 ADMIN_IDS = [7305665779, 7331380618]
@@ -44,6 +49,7 @@ async def setup_db():
 # ================= MAIN =================
 def main():
 
+    # ✔ NO MANUAL LOOP (IMPORTANT FIX)
     app = ApplicationBuilder().token(TOKEN).build()
 
     # handlers
@@ -56,10 +62,10 @@ def main():
     for h in get_reward_handlers():
         app.add_handler(h)
 
-    # 12 AM IST = 18:30 UTC
+    # ================= DAILY JOB (12 AM IST) =================
     app.job_queue.run_daily(
         daily_report,
-        time=dtime(hour=18, minute=30)
+        time=dtime(hour=18, minute=30)  # UTC = 12 AM IST
     )
 
     print("🤖 BOT RUNNING...")
