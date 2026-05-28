@@ -1,8 +1,7 @@
 import asyncio
 import os
-import pytz
 
-from datetime import time as dtime
+from datetime import time as dtime, timezone, timedelta
 
 from telegram.ext import ApplicationBuilder
 
@@ -21,7 +20,8 @@ from database.db import (
 
 ADMIN_IDS = [7305665779, 7331380618]
 
-INDIA = pytz.timezone("Asia/Kolkata")
+# ================= IST FIX (NO PYTZ) =================
+IST = timezone(timedelta(hours=5, minutes=30))
 
 
 # ================= DAILY REPORT =================
@@ -39,7 +39,7 @@ async def daily_report(context):
 
     for admin in ADMIN_IDS:
         try:
-            await context.bot.send_message(admin, text)
+            await context.bot.send_message(chat_id=admin, text=text)
         except:
             pass
 
@@ -64,10 +64,11 @@ def main():
     for handler in get_reward_handlers():
         app.add_handler(handler)
 
-    # ================= FIXED DAILY JOB (12 AM IST) =================
+    # ================= DAILY JOB (12 AM IST) =================
+    # 12 AM IST = 18:30 UTC
     app.job_queue.run_daily(
         daily_report,
-        time=dtime(hour=18, minute=30)  # ✅ 00:00 IST = 18:30 UTC
+        time=dtime(hour=18, minute=30)
     )
 
     print("🤖 BOT RUNNING...")
