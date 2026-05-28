@@ -1,7 +1,8 @@
 import asyncio
 import os
-from datetime import time
 import pytz
+
+from datetime import time as dtime
 
 from telegram.ext import ApplicationBuilder
 
@@ -11,8 +12,12 @@ from handlers.start import get_handlers
 from handlers.admin import get_admin_handlers
 from handlers.reward import get_reward_handlers
 
-from database.db import init_db, DB_NAME, get_total_users, get_total_tickets
-
+from database.db import (
+    init_db,
+    DB_NAME,
+    get_total_users,
+    get_total_tickets
+)
 
 ADMIN_IDS = [7305665779, 7331380618]
 
@@ -34,12 +39,12 @@ async def daily_report(context):
 
     for admin in ADMIN_IDS:
         try:
-            await context.bot.send_message(chat_id=admin, text=text)
+            await context.bot.send_message(admin, text)
         except:
             pass
 
 
-# ================= SETUP DB =================
+# ================= DB INIT =================
 async def setup_db():
     await init_db()
 
@@ -49,7 +54,7 @@ def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # ================= HANDLERS =================
+    # handlers
     for handler in get_admin_handlers():
         app.add_handler(handler)
 
@@ -59,10 +64,10 @@ def main():
     for handler in get_reward_handlers():
         app.add_handler(handler)
 
-    # ================= AUTO DAILY JOB (12 AM IST) =================
+    # ================= FIXED DAILY JOB (12 AM IST) =================
     app.job_queue.run_daily(
         daily_report,
-        time=time(hour=0, minute=0, tzinfo=INDIA)
+        time=dtime(hour=18, minute=30)  # ✅ 00:00 IST = 18:30 UTC
     )
 
     print("🤖 BOT RUNNING...")
@@ -75,9 +80,6 @@ if __name__ == "__main__":
 
     asyncio.run(setup_db())
 
-    if os.path.exists(DB_NAME):
-        print("✅ DATABASE CONNECTED")
-    else:
-        print("❌ DATABASE FILE NOT FOUND (will auto create)")
+    print("✅ DB READY" if os.path.exists(DB_NAME) else "⚠️ DB WILL AUTO CREATE")
 
     main()
