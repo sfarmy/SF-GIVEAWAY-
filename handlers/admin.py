@@ -1,14 +1,30 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
+)
+
+from telegram.ext import (
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    MessageHandler,
+    filters
+)
 
 from database.db import (
     create_redeem_code,
     list_redeem_codes,
     get_all_users,
-    get_redeem_users
+    get_redeem_users,
+    DB_NAME
 )
 
+import os
+
 ADMIN_IDS = [7305665779, 7331380618]
+
+restore_state = {}
 
 
 # ================= CHECK ADMIN =================
@@ -19,7 +35,6 @@ def is_admin(user_id):
 # ================= ADMIN PANEL =================
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # Ignore groups/channels
     if update.effective_chat.type != "private":
         return
 
@@ -27,9 +42,41 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     buttons = [
-        [InlineKeyboardButton("🎁 Redeem System", callback_data="adm_redeem")],
-        [InlineKeyboardButton("📢 Broadcast", callback_data="adm_broadcast")],
-        [InlineKeyboardButton("📨 Send User Msg", callback_data="adm_msg")]
+
+        [
+            InlineKeyboardButton(
+                "🎁 Redeem System",
+                callback_data="adm_redeem"
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                "📢 Broadcast",
+                callback_data="adm_broadcast"
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                "📨 Send User Msg",
+                callback_data="adm_msg"
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                "💾 Backup Database",
+                callback_data="adm_backup"
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                "♻️ Restore Database",
+                callback_data="adm_restore"
+            )
+        ]
     ]
 
     await update.message.reply_text(
@@ -74,6 +121,7 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Use:\n"
             "/broadcast YOUR_MESSAGE"
         )
+
         return
 
     # ================= USER MSG =================
@@ -84,13 +132,128 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Use:\n"
             "/msg USER_ID MESSAGE"
         )
+
         return
+
+    # ================= BACKUP =================
+    if data == "adm_backup":
+
+        if not os.path.exists(DB_NAME):
+
+            await q.message.edit_text(
+                "❌ DATABASE FILE NOT FOUND"
+            )
+
+            return
+
+        await context.bot.send_document(
+            chat_id=q.from_user.id,
+            document=open(DB_NAME, "rb"),
+            filename="database_backup.db",
+            caption="✅ DATABASE BACKUP"
+        )
+
+        await q.message.edit_text(
+            "✅ BACKUP SENT"
+        )
+
+        return
+
+    # ================= RESTORE =================
+    if data == "adm_restore":
+
+        restore_state[q.from_user.id] = True
+
+        await q.message.edit_text(
+            "♻️ SEND .db FILE TO RESTORE DATABASE"
+        )
+
+        return
+
+
+# ================= BACKUP COMMAND =================
+async def backup_database(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_chat.type != "private":
+        return
+
+    if not is_admin(update.effective_user.id):
+        return
+
+    if not os.path.exists(DB_NAME):
+
+        await update.message.reply_text(
+            "❌ DATABASE FILE NOT FOUND"
+        )
+
+        return
+
+    await context.bot.send_document(
+        chat_id=update.effective_user.id,
+        document=open(DB_NAME, "rb"),
+        filename="database_backup.db",
+        caption="✅ DATABASE BACKUP"
+    )
+
+
+# ================= RESTORE COMMAND =================
+async def restore_database(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_chat.type != "private":
+        return
+
+    if not is_admin(update.effective_user.id):
+        return
+
+    restore_state[update.effective_user.id] = True
+
+    await update.message.reply_text(
+        "♻️ SEND DATABASE .db FILE"
+    )
+
+
+# ================= HANDLE DB FILE =================
+async def handle_restore_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_chat.type != "private":
+        return
+
+    user_id = update.effective_user.id
+
+    if not is_admin(user_id):
+        return
+
+    if not restore_state.get(user_id):
+        return
+
+    document = update.message.document
+
+    if not document:
+        return
+
+    if not document.file_name.endswith(".db"):
+
+        await update.message.reply_text(
+            "❌ ONLY .db FILE ALLOWED"
+        )
+
+        return
+
+    file = await document.get_file()
+
+    await file.download_to_drive(DB_NAME)
+
+    restore_state[user_id] = False
+
+    await update.message.reply_text(
+        "✅ DATABASE RESTORED SUCCESSFULLY\n\n"
+        "♻️ RESTART BOT NOW"
+    )
 
 
 # ================= BROADCAST =================
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # Ignore groups/channels
     if update.effective_chat.type != "private":
         return
 
@@ -104,6 +267,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ Send message also"
         )
+
         return
 
     users = await get_all_users()
@@ -138,7 +302,6 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= SEND USER MSG =================
 async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # Ignore groups/channels
     if update.effective_chat.type != "private":
         return
 
@@ -150,6 +313,7 @@ async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ Format:\n/msg USER_ID MESSAGE"
         )
+
         return
 
     try:
@@ -177,7 +341,6 @@ async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= CREATE REDEEM =================
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # Ignore groups/channels
     if update.effective_chat.type != "private":
         return
 
@@ -195,6 +358,7 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ Format:\n/create CODE REWARD USES"
         )
+
         return
 
     await create_redeem_code(
@@ -214,7 +378,6 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= LIST REDEEM =================
 async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # Ignore groups/channels
     if update.effective_chat.type != "private":
         return
 
@@ -228,6 +391,7 @@ async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ NO CODES"
         )
+
         return
 
     text = "🎁 ACTIVE REDEEM CODES\n\n"
@@ -246,7 +410,6 @@ async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= REDEEM USERS =================
 async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # Ignore groups/channels
     if update.effective_chat.type != "private":
         return
 
@@ -258,6 +421,7 @@ async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ Format:\n/redeem_users CODE"
         )
+
         return
 
     code = context.args[0]
@@ -269,11 +433,13 @@ async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ NO USERS FOUND"
         )
+
         return
 
     text = f"🎁 USERS WHO USED {code}\n\n"
 
-    i = 1
+    unique_users = []
+    added = set()
 
     for u in users:
 
@@ -281,6 +447,15 @@ async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if not username:
             username = "NO_USERNAME"
+
+        if username not in added:
+
+            unique_users.append(username)
+            added.add(username)
+
+    i = 1
+
+    for username in unique_users:
 
         text += f"{i}. {username}\n"
 
@@ -327,5 +502,20 @@ def get_admin_handlers():
         CommandHandler(
             "redeem_users",
             redeem_users
+        ),
+
+        CommandHandler(
+            "backup",
+            backup_database
+        ),
+
+        CommandHandler(
+            "restore",
+            restore_database
+        ),
+
+        MessageHandler(
+            filters.Document.ALL,
+            handle_restore_file
         )
     ]
