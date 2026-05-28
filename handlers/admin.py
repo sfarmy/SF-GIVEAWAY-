@@ -19,6 +19,10 @@ def is_admin(user_id):
 # ================= ADMIN PANEL =================
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    # Ignore groups/channels
+    if update.effective_chat.type != "private":
+        return
+
     if not is_admin(update.effective_user.id):
         return
 
@@ -86,13 +90,20 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= BROADCAST =================
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    # Ignore groups/channels
+    if update.effective_chat.type != "private":
+        return
+
     if not is_admin(update.effective_user.id):
         return
 
     text = " ".join(context.args)
 
     if not text:
-        await update.message.reply_text("❌ Send message also")
+
+        await update.message.reply_text(
+            "❌ Send message also"
+        )
         return
 
     users = await get_all_users()
@@ -103,6 +114,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for u in users:
 
         try:
+
             user_id = u[0]
 
             await context.bot.send_message(
@@ -113,6 +125,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
             sent += 1
 
         except:
+
             failed += 1
 
     await update.message.reply_text(
@@ -124,6 +137,10 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ================= SEND USER MSG =================
 async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    # Ignore groups/channels
+    if update.effective_chat.type != "private":
+        return
 
     if not is_admin(update.effective_user.id):
         return
@@ -160,6 +177,10 @@ async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= CREATE REDEEM =================
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    # Ignore groups/channels
+    if update.effective_chat.type != "private":
+        return
+
     if not is_admin(update.effective_user.id):
         return
 
@@ -193,6 +214,10 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= LIST REDEEM =================
 async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    # Ignore groups/channels
+    if update.effective_chat.type != "private":
+        return
+
     if not is_admin(update.effective_user.id):
         return
 
@@ -220,6 +245,10 @@ async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ================= REDEEM USERS =================
 async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    # Ignore groups/channels
+    if update.effective_chat.type != "private":
+        return
 
     if not is_admin(update.effective_user.id):
         return
