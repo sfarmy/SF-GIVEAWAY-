@@ -1,16 +1,5 @@
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup
-)
-
-from telegram.ext import (
-    CommandHandler,
-    CallbackQueryHandler,
-    MessageHandler,
-    ContextTypes,
-    filters
-)
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
 
 from database.db import (
     create_redeem_code,
@@ -55,7 +44,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ================= CALLBACK BUTTONS =================
+# ================= CALLBACK =================
 async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -70,35 +59,26 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ================= REDEEM =================
     if data == "adm_redeem":
 
-        text = (
+        await q.message.edit_text(
             "🎁 REDEEM SYSTEM\n\n"
-            "➕ CREATE:\n"
-            "/create CODE REWARD USES\n\n"
-            "📋 LIST:\n"
-            "/list_redeem\n\n"
-            "👤 USERS:\n"
-            "/redeem_users CODE"
+            "➕ /create CODE REWARD USES\n"
+            "📋 /list_redeem\n"
+            "👤 /redeem_users CODE"
         )
-
-        await q.message.edit_text(text)
         return
 
 
     # ================= BROADCAST =================
     if data == "adm_broadcast":
 
-        await q.message.edit_text(
-            "📢 BROADCAST\n\n/broadcast YOUR_MESSAGE"
-        )
+        await q.message.edit_text("📢 /broadcast MESSAGE")
         return
 
 
     # ================= USER MSG =================
     if data == "adm_msg":
 
-        await q.message.edit_text(
-            "📨 USER MSG\n\n/msg USER_ID MESSAGE"
-        )
+        await q.message.edit_text("📨 /msg USER_ID MESSAGE")
         return
 
 
@@ -124,13 +104,11 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         restore_state[q.from_user.id] = True
 
-        await q.message.edit_text(
-            "♻️ SEND .db FILE TO RESTORE"
-        )
+        await q.message.edit_text("♻️ SEND .db FILE")
         return
 
 
-# ================= HANDLE DB FILE =================
+# ================= RESTORE FILE =================
 async def handle_restore_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
@@ -147,7 +125,7 @@ async def handle_restore_file(update: Update, context: ContextTypes.DEFAULT_TYPE
     doc = update.message.document
 
     if not doc or not doc.file_name.endswith(".db"):
-        await update.message.reply_text("❌ ONLY .db FILE ALLOWED")
+        await update.message.reply_text("❌ ONLY .db FILE")
         return
 
     file = await doc.get_file()
@@ -155,16 +133,11 @@ async def handle_restore_file(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     restore_state[user_id] = False
 
-    await update.message.reply_text(
-        "✅ DATABASE RESTORED\nRESTART BOT"
-    )
+    await update.message.reply_text("✅ DATABASE RESTORED\nRESTART BOT")
 
 
 # ================= BROADCAST =================
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_chat.type != "private":
-        return
 
     if not is_admin(update.effective_user.id):
         return
@@ -177,19 +150,16 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     users = await get_all_users()
 
-    sent, failed = 0, 0
+    sent = failed = 0
 
     for u in users:
-
         try:
             await context.bot.send_message(u[0], text)
             sent += 1
         except:
             failed += 1
 
-    await update.message.reply_text(
-        f"✅ DONE\nSent: {sent}\nFailed: {failed}"
-    )
+    await update.message.reply_text(f"✅ SENT: {sent}\n❌ FAILED: {failed}")
 
 
 # ================= MSG USER =================
@@ -234,11 +204,7 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await create_redeem_code(code, reward, uses, total_uses)
 
     await update.message.reply_text(
-        f"✅ CREATED\n\n"
-        f"🎟 Code: {code}\n"
-        f"💎 Reward: {reward}\n"
-        f"👥 Total: {total_uses}\n"
-        f"♻️ Left: {uses}"
+        f"✅ CREATED\n🎟 {code}\n💎 {reward}\n👥 {total_uses}"
     )
 
 
@@ -257,7 +223,6 @@ async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = "🎁 ACTIVE REDEEM CODES\n\n"
 
     for c in data:
-
         code, reward, uses_left, total_uses = c
         used = total_uses - uses_left
 
@@ -272,7 +237,7 @@ async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text)
 
 
-# ================= REDEEM USERS =================
+# ================= REDEEM USERS (FIX DUPLICATE) =================
 async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not is_admin(update.effective_user.id):
@@ -295,14 +260,12 @@ async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     i = 1
 
     for u in users:
-
         username = u[0] or "NO_USERNAME"
 
         if username in seen:
             continue
 
         seen.add(username)
-
         text += f"{i}. {username}\n"
         i += 1
 
@@ -314,7 +277,6 @@ def get_admin_handlers():
 
     return [
         CommandHandler("admin", admin_panel),
-
         CallbackQueryHandler(admin_buttons, pattern="^adm_"),
 
         CommandHandler("broadcast", broadcast),
