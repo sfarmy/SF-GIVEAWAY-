@@ -2,6 +2,8 @@ import asyncio
 import os
 from datetime import time as dtime
 
+asyncio.set_event_loop(asyncio.new_event_loop())  # ⭐ IMPORTANT FIX
+
 from telegram.ext import ApplicationBuilder
 
 from config import TOKEN
@@ -46,7 +48,6 @@ def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # handlers
     for h in get_admin_handlers():
         app.add_handler(h)
 
@@ -56,19 +57,16 @@ def main():
     for h in get_reward_handlers():
         app.add_handler(h)
 
-    # job queue
     app.job_queue.run_daily(
         daily_report,
-        time=dtime(hour=18, minute=30)  # 12 AM IST
+        time=dtime(hour=18, minute=30)
     )
 
     print("🤖 BOT RUNNING...")
 
-    # 🚨 IMPORTANT: NO asyncio.run()
     app.run_polling(drop_pending_updates=True)
 
 
-# ================= ENTRY =================
 if __name__ == "__main__":
 
     asyncio.run(setup_db())
