@@ -1,5 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler, ContextTypes
+
 from database.db import (
     create_redeem_code,
     list_redeem_codes,
@@ -75,7 +76,7 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "adm_msg":
 
         await q.message.edit_text(
-            "📨 USER MESSAGE\n\n"
+            "📨 USER MESSAGE SYSTEM\n\n"
             "Use:\n"
             "/msg USER_ID MESSAGE"
         )
@@ -99,10 +100,16 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sent = 0
     failed = 0
 
-    for user_id in users:
+    for u in users:
 
         try:
-            await context.bot.send_message(user_id, text)
+            user_id = u[0]
+
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=text
+            )
+
             sent += 1
 
         except:
@@ -122,21 +129,32 @@ async def msg_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if len(context.args) < 2:
+
         await update.message.reply_text(
             "❌ Format:\n/msg USER_ID MESSAGE"
         )
         return
 
     try:
+
         user_id = int(context.args[0])
+
         text = " ".join(context.args[1:])
 
-        await context.bot.send_message(user_id, text)
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=text
+        )
 
-        await update.message.reply_text("✅ MESSAGE SENT")
+        await update.message.reply_text(
+            "✅ MESSAGE SENT"
+        )
 
     except:
-        await update.message.reply_text("❌ FAILED")
+
+        await update.message.reply_text(
+            "❌ FAILED"
+        )
 
 
 # ================= CREATE REDEEM =================
@@ -146,17 +164,23 @@ async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
+
         code = context.args[0]
         reward = int(context.args[1])
         uses = int(context.args[2])
 
     except:
+
         await update.message.reply_text(
             "❌ Format:\n/create CODE REWARD USES"
         )
         return
 
-    await create_redeem_code(code, reward, uses)
+    await create_redeem_code(
+        code,
+        reward,
+        uses
+    )
 
     await update.message.reply_text(
         f"✅ CODE CREATED\n\n"
@@ -175,7 +199,10 @@ async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = await list_redeem_codes()
 
     if not data:
-        await update.message.reply_text("❌ NO CODES")
+
+        await update.message.reply_text(
+            "❌ NO CODES"
+        )
         return
 
     text = "🎁 ACTIVE REDEEM CODES\n\n"
@@ -198,6 +225,7 @@ async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if len(context.args) < 1:
+
         await update.message.reply_text(
             "❌ Format:\n/redeem_users CODE"
         )
@@ -208,7 +236,10 @@ async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     users = await get_redeem_users(code)
 
     if not users:
-        await update.message.reply_text("❌ NO USERS FOUND")
+
+        await update.message.reply_text(
+            "❌ NO USERS FOUND"
+        )
         return
 
     text = f"🎁 USERS WHO USED {code}\n\n"
@@ -217,7 +248,10 @@ async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     for u in users:
 
-        username = u[0] if u[0] else "NO_USERNAME"
+        username = u[0]
+
+        if not username:
+            username = "NO_USERNAME"
 
         text += f"{i}. {username}\n"
 
@@ -231,20 +265,38 @@ def get_admin_handlers():
 
     return [
 
-        CommandHandler("admin", admin_panel),
+        CommandHandler(
+            "admin",
+            admin_panel
+        ),
 
         CallbackQueryHandler(
             admin_buttons,
             pattern="^adm_"
         ),
 
-        CommandHandler("broadcast", broadcast),
+        CommandHandler(
+            "broadcast",
+            broadcast
+        ),
 
-        CommandHandler("msg", msg_user),
+        CommandHandler(
+            "msg",
+            msg_user
+        ),
 
-        CommandHandler("create", create),
+        CommandHandler(
+            "create",
+            create
+        ),
 
-        CommandHandler("list_redeem", list_redeem),
+        CommandHandler(
+            "list_redeem",
+            list_redeem
+        ),
 
-        CommandHandler("redeem_users", redeem_users)
+        CommandHandler(
+            "redeem_users",
+            redeem_users
+        )
     ]
