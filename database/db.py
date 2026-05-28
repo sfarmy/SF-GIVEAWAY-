@@ -1,12 +1,12 @@
 import aiosqlite
 import os
-from datetime import datetime
-import pytz
+from datetime import datetime, timezone, timedelta
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "database.db")
 
-IST = pytz.timezone("Asia/Kolkata")
+# ================= IST TIME (NO PYTZ) =================
+IST = timezone(timedelta(hours=5, minutes=30))
 
 
 # ================= INIT DB =================
@@ -22,7 +22,7 @@ async def init_db():
             referrals INTEGER DEFAULT 0,
             welcome_used INTEGER DEFAULT 0,
             referral_used INTEGER DEFAULT 0,
-            last_bonus_day TEXT DEFAULT "",
+            last_bonus_day TEXT DEFAULT '',
             is_banned INTEGER DEFAULT 0
         )
         """)
@@ -54,7 +54,7 @@ async def init_db():
         await db.commit()
 
 
-# ================= UTIL =================
+# ================= TODAY (IST SAFE) =================
 def get_today():
     return datetime.now(IST).strftime("%Y-%m-%d")
 
@@ -208,7 +208,7 @@ async def add_referral(referrer_id, user_id):
         return "success"
 
 
-# ================= DAILY BONUS (IST FIXED) =================
+# ================= DAILY BONUS =================
 async def claim_daily_bonus(user_id):
 
     today = get_today()
@@ -235,17 +235,15 @@ async def claim_daily_bonus(user_id):
         return "success"
 
 
-# ================= REDEEM =================
+# ================= REDEEM SYSTEM =================
 async def create_redeem_code(code, reward, uses, total_uses):
 
     async with aiosqlite.connect(DB_NAME) as db:
-
         await db.execute("""
             INSERT OR REPLACE INTO redeem_codes
             (code, reward, uses_left, total_uses)
             VALUES (?, ?, ?, ?)
         """, (code, reward, uses, total_uses))
-
         await db.commit()
 
 
@@ -308,7 +306,7 @@ async def use_redeem_code(user_id, username, code):
         return reward
 
 
-# ================= EXTRA HELPERS =================
+# ================= HELPERS =================
 async def get_all_users():
 
     async with aiosqlite.connect(DB_NAME) as db:
