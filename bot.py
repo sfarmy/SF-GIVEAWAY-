@@ -1,8 +1,6 @@
 import asyncio
 import os
 
-from datetime import time as dtime, timezone, timedelta
-
 from telegram.ext import ApplicationBuilder
 
 from config import TOKEN
@@ -11,17 +9,10 @@ from handlers.start import get_handlers
 from handlers.admin import get_admin_handlers
 from handlers.reward import get_reward_handlers
 
-from database.db import (
-    init_db,
-    DB_NAME,
-    get_total_users,
-    get_total_tickets
-)
+from database.db import init_db, DB_NAME, get_total_users, get_total_tickets
+
 
 ADMIN_IDS = [7305665779, 7331380618]
-
-# ================= IST FIX (NO PYTZ) =================
-IST = timezone(timedelta(hours=5, minutes=30))
 
 
 # ================= DAILY REPORT =================
@@ -39,7 +30,7 @@ async def daily_report(context):
 
     for admin in ADMIN_IDS:
         try:
-            await context.bot.send_message(chat_id=admin, text=text)
+            await context.bot.send_message(admin, text)
         except:
             pass
 
@@ -49,8 +40,16 @@ async def setup_db():
     await init_db()
 
 
+# ================= FIX LOOP ISSUE =================
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
+
 # ================= MAIN =================
 def main():
+
+    # ✔ IMPORTANT FIX: ensure loop exists before builder
+    asyncio.set_event_loop(asyncio.get_event_loop())
 
     app = ApplicationBuilder().token(TOKEN).build()
 
@@ -64,11 +63,10 @@ def main():
     for handler in get_reward_handlers():
         app.add_handler(handler)
 
-    # ================= DAILY JOB (12 AM IST) =================
-    # 12 AM IST = 18:30 UTC
+    # daily job
     app.job_queue.run_daily(
         daily_report,
-        time=dtime(hour=18, minute=30)
+        time=__import__("datetime").time(hour=18, minute=30)
     )
 
     print("🤖 BOT RUNNING...")
@@ -81,6 +79,6 @@ if __name__ == "__main__":
 
     asyncio.run(setup_db())
 
-    print("✅ DB READY" if os.path.exists(DB_NAME) else "⚠️ DB WILL AUTO CREATE")
+    print("✅ DB READY" if os.path.exists(DB_NAME) else "⚠️ DB AUTO CREATE MODE")
 
     main()
