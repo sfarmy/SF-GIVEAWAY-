@@ -31,7 +31,7 @@ async def daily_report(context):
 
     for admin in ADMIN_IDS:
         try:
-            await context.bot.send_message(admin, text)
+            await context.bot.send_message(chat_id=admin, text=text)
         except:
             pass
 
@@ -41,11 +41,12 @@ async def setup_db():
     await init_db()
 
 
-# ================= SAFE START WRAPPER =================
-async def start_bot():
+# ================= MAIN =================
+def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
+    # handlers
     for h in get_admin_handlers():
         app.add_handler(h)
 
@@ -55,13 +56,15 @@ async def start_bot():
     for h in get_reward_handlers():
         app.add_handler(h)
 
+    # job queue
     app.job_queue.run_daily(
         daily_report,
-        time=dtime(hour=18, minute=30)
+        time=dtime(hour=18, minute=30)  # 12 AM IST
     )
 
     print("🤖 BOT RUNNING...")
 
+    # 🚨 IMPORTANT: NO asyncio.run()
     app.run_polling(drop_pending_updates=True)
 
 
@@ -72,4 +75,4 @@ if __name__ == "__main__":
 
     print("✅ DB READY" if os.path.exists(DB_NAME) else "⚠️ DB AUTO CREATE MODE")
 
-    asyncio.run(start_bot())
+    main()
