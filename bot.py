@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import time as dtime
 
 from telegram.ext import ApplicationBuilder
 
@@ -30,7 +31,7 @@ async def daily_report(context):
 
     for admin in ADMIN_IDS:
         try:
-            await context.bot.send_message(admin, text)
+            await context.bot.send_message(chat_id=admin, text=text)
         except:
             pass
 
@@ -40,33 +41,25 @@ async def setup_db():
     await init_db()
 
 
-# ================= FIX LOOP ISSUE =================
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
-
-
 # ================= MAIN =================
 def main():
-
-    # ✔ IMPORTANT FIX: ensure loop exists before builder
-    asyncio.set_event_loop(asyncio.get_event_loop())
 
     app = ApplicationBuilder().token(TOKEN).build()
 
     # handlers
-    for handler in get_admin_handlers():
-        app.add_handler(handler)
+    for h in get_admin_handlers():
+        app.add_handler(h)
 
-    for handler in get_handlers():
-        app.add_handler(handler)
+    for h in get_handlers():
+        app.add_handler(h)
 
-    for handler in get_reward_handlers():
-        app.add_handler(handler)
+    for h in get_reward_handlers():
+        app.add_handler(h)
 
-    # daily job
+    # 12 AM IST = 18:30 UTC
     app.job_queue.run_daily(
         daily_report,
-        time=__import__("datetime").time(hour=18, minute=30)
+        time=dtime(hour=18, minute=30)
     )
 
     print("🤖 BOT RUNNING...")
