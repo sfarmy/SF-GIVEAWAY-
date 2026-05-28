@@ -4,25 +4,20 @@ import os
 from telegram.ext import ApplicationBuilder
 
 from config import TOKEN
-
 from handlers.start import get_handlers
 from handlers.admin import get_admin_handlers
 from handlers.reward import get_reward_handlers
-
 from database.db import init_db, DB_NAME
 
 
-# ================= DB INIT =================
 async def setup_db():
     await init_db()
 
 
-# ================= MAIN =================
 def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # handlers
     for h in get_admin_handlers():
         app.add_handler(h)
 
@@ -37,14 +32,10 @@ def main():
     app.run_polling(drop_pending_updates=True)
 
 
-# ================= ENTRY =================
 if __name__ == "__main__":
 
     asyncio.run(setup_db())
 
-    if os.path.exists(DB_NAME):
-        print("✅ DB READY")
-    else:
-        print("⚠️ DB AUTO CREATE MODE")
+    print("✅ DB READY" if os.path.exists(DB_NAME) else "⚠️ DB AUTO CREATE MODE")
 
     main()
