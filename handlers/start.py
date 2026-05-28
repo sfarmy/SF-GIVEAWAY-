@@ -1,10 +1,15 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
+)
+
 from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
     MessageHandler,
-    filters,
-    ContextTypes
+    ContextTypes,
+    filters
 )
 
 from database.db import (
@@ -17,7 +22,7 @@ from database.db import (
     use_redeem_code,
     already_claimed_code,
     save_claim_history,
-    get_total_users,
+    get_all_users,
     get_total_tickets,
     get_user_rank
 )
@@ -36,14 +41,12 @@ CHANNELS = [
 
 GROUP = {"name": "SF TOOL GC", "link": "https://t.me/sf_reset", "id": -1002708620916}
 
-
 # ================= STATE =================
 user_state = {}
 
 
-# ================= FORCE JOIN CHECK =================
+# ================= FORCE JOIN =================
 async def check_force_join(user_id, bot):
-
     not_joined = []
 
     for c in CHANNELS:
@@ -66,7 +69,6 @@ async def check_force_join(user_id, bot):
 
 # ================= JOIN BUTTONS =================
 def get_join_buttons(channels):
-
     buttons = [[InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])] for c in channels]
 
     buttons.append([
@@ -89,6 +91,9 @@ async def open_main_menu(message, user_id):
         [
             InlineKeyboardButton("🎁 REDEEM CODE", callback_data="redeem"),
             InlineKeyboardButton("🎟 DAILY BONUS", callback_data="bonus")
+        ],
+        [
+            InlineKeyboardButton("🎁 REWARDS", callback_data="rewards_menu")
         ]
     ]
 
@@ -105,7 +110,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user = update.effective_user
-
     username = f"@{user.username}" if user.username else user.first_name
 
     await add_user(user.id, username)
@@ -149,7 +153,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await q.answer()
     data = q.data
-
 
     # ================= VERIFY JOIN =================
     if data == "check_join":
@@ -203,7 +206,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "leaderboard":
 
         users = await top_users()
-        total_users = await get_total_users()
+        total_users = len(await get_all_users())
         total_tickets = await get_total_tickets()
         rank = await get_user_rank(user_id)
 
@@ -232,7 +235,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
-
         txt = "🎉 +2 TICKETS ADDED" if r == "success" else "⚠️ ALREADY CLAIMED"
 
         await q.message.edit_text(
@@ -249,6 +251,16 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text(
             "🎁 SEND CODE",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
+        )
+        return
+
+
+    # ================= REWARDS =================
+    if data == "rewards_menu":
+
+        await q.message.edit_text(
+            "🎁 REWARDS SYSTEM\n\nComing Soon 🚀",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="back")]])
         )
         return
