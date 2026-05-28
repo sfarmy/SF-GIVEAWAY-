@@ -16,7 +16,7 @@ from database.db import (
     give_welcome_bonus,
     use_redeem_code,
     already_claimed_code,
-    save_redeem_claim
+    save_claim_history
 )
 
 import asyncio
