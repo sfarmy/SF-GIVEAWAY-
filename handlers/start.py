@@ -1,4 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+
 from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
@@ -21,52 +22,91 @@ from database.db import (
 
 import asyncio
 
+
 # ================= CHANNELS =================
 CHANNELS = [
-    {"name": "SF ARMY", "link": "https://t.me/+TwoCQG8QZPM1OGRl", "id": -1003689156772},
-    {"name": "SF TOOL", "link": "https://t.me/anushar_file", "id": -1003746793908},
-    {"name": "SF MM", "link": "https://t.me/EagleMiddleUpdates", "id": -1003971360634},
-    {"name": "SF VOUCHER", "link": "https://t.me/eaglevoucher", "id": -1003770492772},
-    {"name": "SF GIVEAWAY", "link": "https://t.me/sfgiveaways", "id": -1003664665551}
+
+    {
+        "name": "SF ARMY",
+        "link": "https://t.me/+TwoCQG8QZPM1OGRl",
+        "id": -1003689156772
+    },
+
+    {
+        "name": "SF TOOL",
+        "link": "https://t.me/anushar_file",
+        "id": -1003746793908
+    },
+
+    {
+        "name": "SF MM",
+        "link": "https://t.me/EagleMiddleUpdates",
+        "id": -1003971360634
+    },
+
+    {
+        "name": "SF VOUCHER",
+        "link": "https://t.me/eaglevoucher",
+        "id": -1003770492772
+    },
+
+    {
+        "name": "SF GIVEAWAY",
+        "link": "https://t.me/sfgiveaways",
+        "id": -1003664665551
+    }
 ]
 
+
 GROUP = {
+
     "name": "SF TOOL GC",
     "link": "https://t.me/sf_reset",
     "id": -1002708620916
 }
 
+
+# ================= USER STATE =================
 user_state = {}
+
 
 # ================= FORCE JOIN =================
 async def check_force_join(user_id, bot):
 
     not_joined = []
 
+    # CHANNELS
     for c in CHANNELS:
 
         try:
+
             member = await bot.get_chat_member(
                 c["id"],
                 user_id
             )
 
             if member.status in ["left", "kicked"]:
+
                 not_joined.append(c)
 
         except:
+
             not_joined.append(c)
 
+    # GROUP
     try:
+
         member = await bot.get_chat_member(
             GROUP["id"],
             user_id
         )
 
         if member.status in ["left", "kicked"]:
+
             not_joined.append(GROUP)
 
     except:
+
         not_joined.append(GROUP)
 
     return not_joined
@@ -80,6 +120,7 @@ def get_join_buttons(channels):
     for c in channels:
 
         buttons.append([
+
             InlineKeyboardButton(
                 f"📢 {c['name']}",
                 url=c["link"]
@@ -87,6 +128,7 @@ def get_join_buttons(channels):
         ])
 
     buttons.append([
+
         InlineKeyboardButton(
             "✅ VERIFY JOIN",
             callback_data="check_join"
@@ -103,37 +145,37 @@ async def open_main_menu(message, user_id):
 
     buttons = [
 
-    [
-        InlineKeyboardButton(
-            "👤 MY INFO",
-            callback_data="myinfo"
-        ),
+        [
+            InlineKeyboardButton(
+                "👤 MY INFO",
+                callback_data="myinfo"
+            ),
 
-        InlineKeyboardButton(
-            "🏆 LEADERBOARD",
-            callback_data="leaderboard"
-        )
-    ],
+            InlineKeyboardButton(
+                "🏆 LEADERBOARD",
+                callback_data="leaderboard"
+            )
+        ],
 
-    [
-        InlineKeyboardButton(
-            "🎁 REDEEM CODE",
-            callback_data="redeem"
-        ),
+        [
+            InlineKeyboardButton(
+                "🎁 REDEEM CODE",
+                callback_data="redeem"
+            ),
 
-        InlineKeyboardButton(
-            "🎟 DAILY BONUS",
-            callback_data="bonus"
-        )
-    ],
+            InlineKeyboardButton(
+                "🎟 DAILY BONUS",
+                callback_data="bonus"
+            )
+        ],
 
-    [
-        InlineKeyboardButton(
-            "🎁 REWARDS",
-            callback_data="rewards_menu"
-        )
+        [
+            InlineKeyboardButton(
+                "🎁 REWARDS",
+                callback_data="rewards_menu"
+            )
+        ]
     ]
-]
 
     await message.edit_text(
         f"""
@@ -148,7 +190,7 @@ async def open_main_menu(message, user_id):
 # ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # ================= NO RESPONSE IN GROUP/CHANNEL =================
+    # NO RESPONSE IN GROUP / CHANNEL
     if update.effective_chat.type != "private":
         return
 
@@ -166,6 +208,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
 
         try:
+
             referrer_id = int(context.args[0])
 
             if referrer_id != user.id:
@@ -178,6 +221,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if result == "success":
 
                     try:
+
                         await context.bot.send_message(
                             referrer_id,
                             f"""
@@ -188,6 +232,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ➕ YOU GOT 10 TICKETS
                             """
                         )
+
                     except:
                         pass
 
@@ -201,7 +246,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await asyncio.sleep(1)
 
-    await msg.edit_text("⚡ LOADING...")
+    await msg.edit_text(
+        "⚡ LOADING..."
+    )
 
     await asyncio.sleep(1)
 
@@ -222,11 +269,13 @@ THEN CLICK VERIFY BUTTON
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
+
     user_id = q.from_user.id
 
     await q.answer()
 
     data = q.data
+
 
     # ================= VERIFY JOIN =================
     if data == "check_join":
@@ -236,7 +285,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.bot
         )
 
-        # ================= STILL NOT JOINED =================
+        # NOT JOINED
         if not_joined:
 
             await q.message.edit_text(
@@ -250,7 +299,7 @@ JOIN REMAINING CHANNELS BELOW
 
             return
 
-        # ================= VERIFIED =================
+        # VERIFIED
         bonus = await give_welcome_bonus(user_id)
 
         if bonus == "success":
@@ -271,6 +320,7 @@ JOIN REMAINING CHANNELS BELOW
         )
 
         return
+
 
     # ================= MY INFO =================
     if data == "myinfo":
@@ -310,6 +360,7 @@ JOIN REMAINING CHANNELS BELOW
 
         return
 
+
     # ================= LEADERBOARD =================
     if data == "leaderboard":
 
@@ -347,6 +398,7 @@ JOIN REMAINING CHANNELS BELOW
 
         return
 
+
     # ================= DAILY BONUS =================
     if data == "bonus":
 
@@ -372,6 +424,7 @@ JOIN REMAINING CHANNELS BELOW
 
         return
 
+
     # ================= REDEEM =================
     if data == "redeem":
 
@@ -396,6 +449,7 @@ FREE100
 
         return
 
+
     # ================= BACK =================
     if data == "back":
 
@@ -410,7 +464,7 @@ FREE100
 # ================= TEXT HANDLER =================
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # ================= NO RESPONSE IN GROUP =================
+    # NO RESPONSE IN GROUP
     if update.effective_chat.type != "private":
         return
 
@@ -442,6 +496,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             user_state[user_id] = None
+
             return
 
         result = await use_redeem_code(
@@ -494,7 +549,8 @@ def get_handlers():
         ),
 
         CallbackQueryHandler(
-            buttons
+            buttons,
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back)$"
         ),
 
         MessageHandler(
