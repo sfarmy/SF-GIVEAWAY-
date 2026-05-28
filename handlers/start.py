@@ -103,30 +103,37 @@ async def open_main_menu(message, user_id):
 
     buttons = [
 
-        [
-            InlineKeyboardButton(
-                "👤 MY INFO",
-                callback_data="myinfo"
-            ),
+    [
+        InlineKeyboardButton(
+            "👤 MY INFO",
+            callback_data="myinfo"
+        ),
 
-            InlineKeyboardButton(
-                "🏆 LEADERBOARD",
-                callback_data="leaderboard"
-            )
-        ],
+        InlineKeyboardButton(
+            "🏆 LEADERBOARD",
+            callback_data="leaderboard"
+        )
+    ],
 
-        [
-            InlineKeyboardButton(
-                "🎁 REDEEM CODE",
-                callback_data="redeem"
-            ),
+    [
+        InlineKeyboardButton(
+            "🎁 REDEEM CODE",
+            callback_data="redeem"
+        ),
 
-            InlineKeyboardButton(
-                "🎟 DAILY BONUS",
-                callback_data="bonus"
-            )
-        ]
+        InlineKeyboardButton(
+            "🎟 DAILY BONUS",
+            callback_data="bonus"
+        )
+    ],
+
+    [
+        InlineKeyboardButton(
+            "🎁 REWARDS",
+            callback_data="rewards_menu"
+        )
     ]
+]
 
     await message.edit_text(
         f"""
