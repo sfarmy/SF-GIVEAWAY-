@@ -224,6 +224,35 @@ async def create_redeem_code(code, reward, uses):
         await db.commit()
 
 
+# ================= CHECK CLAIMED CODE =================
+async def already_claimed_code(user_id, code):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute("""
+            SELECT * FROM redeem_used
+            WHERE user_id=? AND code=?
+        """, (user_id, code))
+
+        row = await cur.fetchone()
+
+        return bool(row)
+
+
+# ================= SAVE CLAIM HISTORY =================
+async def save_claim_history(user_id, username, code):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        await db.execute("""
+            INSERT INTO redeem_logs
+            (user_id, username, code)
+            VALUES (?, ?, ?)
+        """, (user_id, username, code))
+
+        await db.commit()
+
+
 # ================= USE REDEEM =================
 async def use_redeem_code(user_id, username, code):
 
