@@ -1,4 +1,3 @@
-
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -11,7 +10,7 @@ from telegram.ext import (
 )
 
 
-# ================= REWARDS =================
+# ================= REWARDS MENU =================
 async def rewards_menu(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
@@ -24,53 +23,58 @@ async def rewards_menu(
     text = """
 🎁 AVAILABLE REWARDS
 
+━━━━━━━━━━━━━━
+
 🥇 TOP 1
 🎁 Vice Cream NFT
-🔗 http://t.me/nft/ViceCream-107913
+🔗 https://t.me/nft/ViceCream-107913
 👤 ADMIN: @rudrasocial
 
 ━━━━━━━━━━━━━━
 
 🥈 TOP 2
 🎁 Instant Ramen NFT
-🔗 http://t.me/nft/InstantRamen-16371
+🔗 https://t.me/nft/InstantRamen-16371
 👤 ADMIN: @rudrasocial
 
 ━━━━━━━━━━━━━━
 
 🥉 TOP 3
 🎁 Chill Flame NFT
-🔗 http://t.me/nft/ChillFlame-127571
+🔗 https://t.me/nft/ChillFlame-127571
 👤 ADMIN: @Somani
 
 ━━━━━━━━━━━━━━
 
-🎁 TOP 4
+🏅 TOP 4
 🪙 500 Telegram Stars
 👤 ADMIN: @rudrasocial
 
 ━━━━━━━━━━━━━━
 
-🎁 TOP 5
-💎 Premium Gift
+🎖 TOP 5
+💎 Telegram Premium Gift
 👤 ADMIN: @rudrasocial
 
 ━━━━━━━━━━━━━━
 
-🎁 MORE REWARDS COMING SOON...
-    """
+🚀 MORE REWARDS COMING SOON...
+"""
+
+    buttons = [
+
+        [
+            InlineKeyboardButton(
+                "🔙 BACK",
+                callback_data="back"
+            )
+        ]
+    ]
 
     await q.message.edit_text(
         text,
         disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "🔙 BACK",
-                    callback_data="back"
-                )
-            ]
-        ])
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
 
