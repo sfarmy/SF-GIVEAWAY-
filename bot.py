@@ -13,6 +13,7 @@ from database.db import init_db, DB_NAME
 
 
 async def setup_db():
+
 await init_db()
 
 
@@ -20,12 +21,14 @@ async def main():
 
 app = ApplicationBuilder().token(TOKEN).build()
 
+
 for h in get_handlers():
 
     app.add_handler(
         h,
         group=0
     )
+
 
 for h in get_reward_handlers():
 
@@ -53,11 +56,13 @@ await app.updater.start_polling(
 )
 
 while True:
+
     await asyncio.sleep(3600)
 
 if name == "main":
 
 asyncio.run(setup_db())
+
 
 if os.path.exists(DB_NAME):
 
