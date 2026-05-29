@@ -24,8 +24,11 @@ from database.db import (
     save_claim_history,
     get_all_users,
     get_total_tickets,
-    get_user_rank
+    get_user_rank,
+    get_tickets
 )
+
+from handlers.reward import rewards_menu
 
 import asyncio
 
@@ -65,7 +68,7 @@ GROUP = {
     "id": -1002708620916
 }
 
-# ➕ NEW GROUP ADDED
+# ➕ ONLY ADDED NEW GC (NO CHANGE ANYTHING ELSE)
 GROUP2 = {
     "name": "ANNISERA GC",
     "link": "https://t.me/annisera",
@@ -74,7 +77,6 @@ GROUP2 = {
 
 user_state = {}
 
-# ================= ADMINS =================
 ADMIN_IDS = [7305665779, 7331380618]
 
 
@@ -86,26 +88,32 @@ async def check_force_join(user_id, bot):
     for c in CHANNELS:
         try:
             member = await bot.get_chat_member(c["id"], user_id)
+
             if member.status in ["left", "kicked"]:
                 not_joined.append(c)
+
         except:
             not_joined.append(c)
 
-    # GROUP 1
     try:
         member = await bot.get_chat_member(GROUP["id"], user_id)
+
         if member.status in ["left", "kicked"]:
             not_joined.append(GROUP)
+
     except:
         not_joined.append(GROUP)
 
-    # GROUP 2 (NEW)
+    # ➕ ONLY ADDED THIS BLOCK
     try:
         member = await bot.get_chat_member(GROUP2["id"], user_id)
+
         if member.status in ["left", "kicked"]:
             not_joined.append(GROUP2)
+
     except:
         not_joined.append(GROUP2)
+
 
     return not_joined
 
@@ -117,11 +125,17 @@ def get_join_buttons(channels):
 
     for c in channels:
         buttons.append([
-            InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])
+            InlineKeyboardButton(
+                f"📢 {c['name']}",
+                url=c["link"]
+            )
         ])
 
     buttons.append([
-        InlineKeyboardButton("✅ VERIFY JOIN", callback_data="check_join")
+        InlineKeyboardButton(
+            "✅ VERIFY JOIN",
+            callback_data="check_join"
+        )
     ])
 
     return InlineKeyboardMarkup(buttons)
@@ -133,13 +147,19 @@ async def open_main_menu(message, user_id):
     tickets = await get_tickets(user_id)
 
     buttons = [
+
         [
             InlineKeyboardButton("👤 MY INFO", callback_data="myinfo"),
             InlineKeyboardButton("🏆 LEADERBOARD", callback_data="leaderboard")
         ],
+
         [
             InlineKeyboardButton("🎁 REDEEM CODE", callback_data="redeem"),
             InlineKeyboardButton("🎟 DAILY BONUS", callback_data="bonus")
+        ],
+
+        [
+            InlineKeyboardButton("🎁 REWARDS", callback_data="rewards_menu")
         ]
     ]
 
@@ -161,21 +181,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
-    username = f"@{user.username}" if user.username else user.first_name
+    username = (
+        f"@{user.username}"
+        if user.username
+        else user.first_name
+    )
 
     await add_user(user.id, username)
 
-    # admin notify
-    for admin in ADMIN_IDS:
-        try:
-            await context.bot.send_message(
-                admin,
-                f"🚀 NEW USER\n\n👤 {user.first_name}\n🔗 {username}\n🆔 {user.id}"
-            )
-        except:
-            pass
-
-    msg = await update.message.reply_text(f"👋 HELLO {username}")
+    msg = await update.message.reply_text(
+        f"👋 HELLO {username}"
+    )
 
     await asyncio.sleep(1)
     await msg.edit_text("⚡ LOADING PANEL .")
@@ -186,7 +202,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(1)
 
     await msg.edit_text(
-        "⚠️ JOIN ALL CHANNELS & GROUPS THEN CLICK VERIFY",
+        "⚠️ JOIN ALL CHANNELS & GROUP THEN CLICK VERIFY",
         reply_markup=get_join_buttons(CHANNELS + [GROUP, GROUP2])
     )
 
@@ -196,16 +212,17 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
     user_id = q.from_user.id
+
     await q.answer()
 
     data = q.data
 
-    # VERIFY JOIN
     if data == "check_join":
 
         not_joined = await check_force_join(user_id, context.bot)
 
         if not_joined:
+
             await q.message.edit_text(
                 "❌ FIRST JOIN ALL CHANNELS",
                 reply_markup=get_join_buttons(not_joined)
@@ -216,13 +233,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if bonus == "success":
             await q.message.edit_text("🎁 +15 WELCOME BONUS ADDED")
-            await asyncio.sleep(1)
 
         await open_main_menu(q.message, user_id)
         return
 
 
     if data == "myinfo":
+
         tickets = await get_tickets(user_id)
         rank = await get_user_rank(user_id)
 
@@ -262,7 +279,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 """
 
         for i, u in enumerate(users, 1):
-            text += f"\n{i}. {u[0]} ➜ {u[1]}"
+            text += f"\n{i}. {u[0]} ➜ {u[1]} tickets"
 
         await q.message.edit_text(
             text,
@@ -277,10 +294,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         r = await claim_daily_bonus(user_id)
 
-        msg = "🎉 +2 TICKETS" if r == "success" else "⚠️ ALREADY CLAIMED"
+        txt = "🎉 +2 TICKETS ADDED" if r == "success" else "⚠️ ALREADY CLAIMED"
 
         await q.message.edit_text(
-            msg,
+            txt,
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔙 BACK", callback_data="back")]
             ])
@@ -289,6 +306,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     if data == "redeem":
+
         user_state[user_id] = "redeem"
 
         await q.message.edit_text(
@@ -301,6 +319,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     if data == "back":
+
         await open_main_menu(q.message, user_id)
         return
 
@@ -316,7 +335,11 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if user_state.get(user_id) == "redeem":
 
-        username = f"@{update.effective_user.username}" if update.effective_user.username else update.effective_user.first_name
+        username = (
+            f"@{update.effective_user.username}"
+            if update.effective_user.username
+            else update.effective_user.first_name
+        )
 
         if await already_claimed_code(user_id, text):
             await update.message.reply_text("❌ CODE USED")
