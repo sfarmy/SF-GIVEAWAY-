@@ -27,8 +27,6 @@ from database.db import (
     get_user_rank
 )
 
-from handlers.reward import rewards_menu
-
 import asyncio
 
 
@@ -51,29 +49,38 @@ user_state = {}
 
 ADMIN_IDS = [7305665779, 7331380618]
 
+# 🔥 FIX: START TRACKING STORE (ADDED)
+start_counter = {}
+
 
 # ================= FORCE JOIN =================
 async def check_force_join(user_id, bot):
 
     not_joined = []
 
-    for c in CHANNELS + GROUPS:
+    for c in CHANNELS:
         try:
-            member = await bot.get_chat_member(c["id"], user_id)
-            if member.status in ["left", "kicked"]:
+            m = await bot.get_chat_member(c["id"], user_id)
+            if m.status in ["left", "kicked"]:
                 not_joined.append(c)
         except:
             not_joined.append(c)
 
+    for g in GROUPS:
+        try:
+            m = await bot.get_chat_member(g["id"], user_id)
+            if m.status in ["left", "kicked"]:
+                not_joined.append(g)
+        except:
+            not_joined.append(g)
+
     return not_joined
 
 
-# ================= JOIN BUTTONS =================
-def get_join_buttons(channels):
-
+def get_join_buttons(items):
     buttons = []
 
-    for c in channels:
+    for c in items:
         buttons.append([
             InlineKeyboardButton(f"📢 {c['name']}", url=c["link"])
         ])
@@ -98,9 +105,6 @@ async def open_main_menu(message, user_id):
         [
             InlineKeyboardButton("🎁 REDEEM CODE", callback_data="redeem"),
             InlineKeyboardButton("🎟 DAILY BONUS", callback_data="bonus")
-        ],
-        [
-            InlineKeyboardButton("🎁 REWARDS", callback_data="rewards_menu")
         ]
     ]
 
@@ -110,36 +114,60 @@ async def open_main_menu(message, user_id):
     )
 
 
-# ================= START (FIXED LOADING) =================
+# ================= START (WITH NOTIFICATION FIX RESTORED) =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
         return
 
     user = update.effective_user
-
     username = f"@{user.username}" if user.username else user.first_name
 
     await add_user(user.id, username)
 
+    # 🔥 FIX: START COUNT + NOTIFICATION SYSTEM
+    start_counter[user.id] = start_counter.get(user.id, 0) + 1
+
+    if start_counter[user.id] >= 5:   # 👉 threshold (change if needed)
+        for admin in ADMIN_IDS:
+            try:
+                await context.bot.send_message(
+                    admin,
+                    f"⚠️ USER SPAM START DETECTED\n\n👤 {username}\n🆔 {user.id}\n🔁 START COUNT: {start_counter[user.id]}"
+                )
+            except:
+                pass
+        start_counter[user.id] = 0  # reset after alert
+
+
+    # admin notify (original)
+    for admin in ADMIN_IDS:
+        try:
+            await context.bot.send_message(
+                admin,
+                f"🚀 NEW USER\n\n👤 {user.first_name}\n🔗 {username}\n🆔 {user.id}"
+            )
+        except:
+            pass
+
+
     msg = await update.message.reply_text(f"👋 HELLO {username}")
 
-    await asyncio.sleep(0.8)
+    await asyncio.sleep(1)
     await msg.edit_text("⚡ LOADING PANEL .")
     await asyncio.sleep(0.5)
     await msg.edit_text("⚡ LOADING PANEL ..")
     await asyncio.sleep(0.5)
     await msg.edit_text("⚡ LOADING PANEL ...")
-    await asyncio.sleep(0.8)
+    await asyncio.sleep(0.5)
 
-    # FIXED GROUP ISSUE HERE
     await msg.edit_text(
-        "⚠️ JOIN ALL CHANNELS & GROUPS\n\nTHEN CLICK VERIFY",
+        "⚠️ JOIN ALL CHANNELS & GROUP\nTHEN CLICK VERIFY",
         reply_markup=get_join_buttons(CHANNELS + GROUPS)
     )
 
 
-# ================= CALLBACKS =================
+# ================= CALLBACK =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -147,9 +175,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await q.answer()
 
-    data = q.data
-
-    if data == "check_join":
+    if q.data == "check_join":
 
         not_joined = await check_force_join(user_id, context.bot)
 
@@ -164,76 +190,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await open_main_menu(q.message, user_id)
         return
 
-
-    if data == "myinfo":
-
-        tickets = await get_tickets(user_id)
-        rank = await get_user_rank(user_id)
-
-        await q.message.edit_text(f"👤 INFO\n🎟 {tickets}\n📊 #{rank}")
-        return
-
-
-    if data == "leaderboard":
-
-        users = await top_users()
-
-        text = "🏆 TOP USERS\n\n"
-        for i, u in enumerate(users, 1):
-            text += f"{i}. {u[0]} ➜ {u[1]}\n"
-
-        await q.message.edit_text(text)
-        return
-
-
-    if data == "bonus":
-
-        r = await claim_daily_bonus(user_id)
-
-        await q.message.edit_text(
-            "🎉 +2 ADDED" if r == "success" else "⚠️ ALREADY CLAIMED"
-        )
-        return
-
-
-    if data == "redeem":
-
-        user_state[user_id] = "redeem"
-        await q.message.edit_text("🎁 SEND CODE")
-        return
-
-
-    if data == "back":
-
+    if q.data == "back":
         await open_main_menu(q.message, user_id)
         return
-
-
-# ================= TEXT HANDLER =================
-async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_chat.type != "private":
-        return
-
-    user_id = update.effective_user.id
-    text = update.message.text.strip()
-
-    if user_state.get(user_id) != "redeem":
-        return
-
-    if await already_claimed_code(user_id, text):
-        await update.message.reply_text("❌ ALREADY USED")
-        return
-
-    result = await use_redeem_code(user_id, update.effective_user.first_name, text)
-
-    if result in ["invalid", "expired", "used"]:
-        await update.message.reply_text(f"❌ {result}")
-    else:
-        await save_claim_history(user_id, update.effective_user.first_name, text)
-        await update.message.reply_text(f"🎉 +{result} ADDED")
-
-    user_state[user_id] = None
 
 
 # ================= HANDLERS =================
@@ -241,6 +200,11 @@ def get_handlers():
 
     return [
         CommandHandler("start", start),
-        CallbackQueryHandler(buttons),
-        MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler)
+
+        CallbackQueryHandler(
+            buttons,
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back)$"
+        ),
+
+        MessageHandler(filters.TEXT & ~filters.COMMAND, lambda u, c: None)
     ]
