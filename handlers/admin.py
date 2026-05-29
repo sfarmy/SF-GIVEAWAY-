@@ -23,20 +23,15 @@ DB_NAME
 import os
 import shutil
 
-================= ADMINS =================
-
 ADMIN_IDS = [7305665779, 7331380618]
 
 restore_state = {}
 broadcast_state = {}
 msg_state = {}
 
-================= CHECK ADMIN =================
 
 def is_admin(user_id):
 return user_id in ADMIN_IDS
-
-================= ADMIN PANEL =================
 
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -89,8 +84,6 @@ await update.message.reply_text(
     reply_markup=InlineKeyboardMarkup(buttons)
 )
 
-================= CALLBACK BUTTONS =================
-
 async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 q = update.callback_query
@@ -102,8 +95,6 @@ await q.answer()
 
 data = q.data
 
-
-# ================= REDEEM =================
 if data == "adm_redeem":
 
     text = (
@@ -122,8 +113,6 @@ if data == "adm_redeem":
     await q.message.edit_text(text)
     return
 
-
-# ================= BROADCAST =================
 if data == "adm_broadcast":
 
     broadcast_state[q.from_user.id] = True
@@ -134,8 +123,6 @@ if data == "adm_broadcast":
 
     return
 
-
-# ================= SEND USER MSG =================
 if data == "adm_msg":
 
     msg_state[q.from_user.id] = True
@@ -146,8 +133,6 @@ if data == "adm_msg":
 
     return
 
-
-# ================= BACKUP DB =================
 if data == "adm_backup":
 
     if not os.path.exists(DB_NAME):
@@ -169,8 +154,6 @@ if data == "adm_backup":
 
     return
 
-
-# ================= RESTORE DB =================
 if data == "adm_restore":
 
     restore_state[q.from_user.id] = True
@@ -180,8 +163,6 @@ if data == "adm_restore":
     )
 
     return
-
-================= HANDLE RESTORE FILE =================
 
 async def handle_restore_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -217,16 +198,12 @@ if not doc.file_name.endswith(".db"):
 
 file = await doc.get_file()
 
-
-# ================= BACKUP OLD DB =================
 if os.path.exists(DB_NAME):
 
     backup_path = DB_NAME + ".backup"
 
     shutil.copy(DB_NAME, backup_path)
 
-
-# ================= RESTORE =================
 await file.download_to_drive(DB_NAME)
 
 restore_state[user_id] = False
@@ -234,8 +211,6 @@ restore_state[user_id] = False
 await update.message.reply_text(
     "✅ DATABASE RESTORED\n\n📦 OLD BACKUP SAVED"
 )
-
-================= TEXT HANDLER =================
 
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -247,7 +222,6 @@ if not update.message:
 
 user_id = update.effective_user.id
 
-# ================= IMPORTANT FIX =================
 if not (
     broadcast_state.get(user_id)
     or msg_state.get(user_id)
@@ -256,8 +230,6 @@ if not (
 
 text = update.message.text.strip()
 
-
-# ================= BROADCAST =================
 if broadcast_state.get(user_id):
 
     users = await get_all_users()
@@ -289,7 +261,6 @@ if broadcast_state.get(user_id):
     return
 
 
-# ================= SEND USER MESSAGE =================
 if msg_state.get(user_id):
 
     try:
@@ -314,8 +285,6 @@ if msg_state.get(user_id):
     msg_state[user_id] = False
 
     return
-
-================= CREATE REDEEM =================
 
 async def create(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -351,7 +320,6 @@ await update.message.reply_text(
     f"👥 USES: {uses}"
 )
 
-================= LIST REDEEM =================
 
 async def list_redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -388,8 +356,6 @@ for c in data:
 
 
 await update.message.reply_text(text)
-
-================= REDEEM USERS =================
 
 async def redeem_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -434,7 +400,6 @@ for u in users:
 
 await update.message.reply_text(text)
 
-================= HANDLERS =================
 
 def get_admin_handlers():
 
