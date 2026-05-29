@@ -63,11 +63,21 @@ CHANNELS = [
     }
 ]
 
-GROUP = {
-    "name": "SF TOOL GC",
-    "link": "https://t.me/sf_reset",
-    "id": -1002708620916
-}
+# ================= GROUPS =================
+GROUPS = [
+
+    {
+        "name": "SF TOOL GC",
+        "link": "https://t.me/sf_reset",
+        "id": -1002708620916
+    },
+
+    {
+        "name": "ANNI SERA GC",
+        "link": "https://t.me/annisera",
+        "id": -1002759753827
+    }
+]
 
 user_state = {}
 
