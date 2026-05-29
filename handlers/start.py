@@ -1,4 +1,4 @@
-START.PY (FULL UPDATED CODE)
+#START.PY (FULL UPDATED CODE)
 
 from telegram import (
     Update,
