@@ -11,43 +11,75 @@ from handlers.reward import get_reward_handlers
 
 from database.db import init_db, DB_NAME
 
+================= DB INIT =================
+
 async def setup_db():
-    await init_db()
+await init_db()
+
+================= MAIN =================
 
 async def main():
 
-    app = ApplicationBuilder().token(TOKEN).build()
+app = ApplicationBuilder().token(TOKEN).build()
 
-    # START.PY FIRST
-    for h in get_handlers():
-        app.add_handler(h)
 
-    # REWARD.PY SECOND
-    for h in get_reward_handlers():
-        app.add_handler(h)
+# ================= START.PY FIRST =================
+for h in get_handlers():
 
-    # ADMIN.PY LAST
-    for h in get_admin_handlers():
-        app.add_handler(h)
-
-    print("🤖 BOT RUNNING...")
-
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling(
-        drop_pending_updates=True
+    app.add_handler(
+        h,
+        group=0
     )
 
-    while True:
-        await asyncio.sleep(3600)
 
-if __name__ == "__main__":
+# ================= REWARD.PY SECOND =================
+for h in get_reward_handlers():
 
-    asyncio.run(setup_db())
+    app.add_handler(
+        h,
+        group=1
+    )
 
-    if os.path.exists(DB_NAME):
-        print("✅ DB READY")
-    else:
-        print("⚠️ DB AUTO CREATE MODE")
 
-    asyncio.run(main())
+# ================= ADMIN.PY LAST =================
+for h in get_admin_handlers():
+
+    app.add_handler(
+        h,
+        group=2
+    )
+
+
+print("🤖 BOT RUNNING...")
+
+
+# ================= START BOT =================
+await app.initialize()
+
+await app.start()
+
+await app.updater.start_polling(
+    drop_pending_updates=True
+)
+
+
+# ================= KEEP BOT ALIVE =================
+while True:
+    await asyncio.sleep(3600)
+
+================= ENTRY =================
+
+if name == "main":
+
+asyncio.run(setup_db())
+
+if os.path.exists(DB_NAME):
+
+    print("✅ DB READY")
+
+else:
+
+    print("⚠️ DB AUTO CREATE MODE")
+
+
+asyncio.run(main())
