@@ -166,7 +166,7 @@ async def open_main_menu(message, user_id):
 
     await message.edit_text(
         f"""
-🎟️ WELCOME PANEL
+🎟️ WELCOME SF GIVEAWAY PANEL
 
 🎫 YOUR TICKETS: {tickets}
         """,
