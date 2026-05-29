@@ -1,5 +1,3 @@
-Ye updated admin.py hai — isme sab kuch same hai + clean handling hai. Isko full copy-paste kar do:
-
 from telegram import (
     Update,
     InlineKeyboardButton,
