@@ -1,3 +1,5 @@
+START.PY (FULL UPDATED CODE)
+
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -68,6 +70,9 @@ GROUP = {
 }
 
 user_state = {}
+
+# ================= ADMINS =================
+ADMIN_IDS = [7305665779, 7331380618]
 
 
 # ================= FORCE JOIN =================
@@ -184,6 +189,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await add_user(user.id, username)
+
+    # ================= ADMIN NOTIFY =================
+    for admin in ADMIN_IDS:
+
+        try:
+
+            await context.bot.send_message(
+                admin,
+                f"""
+🚀 NEW USER STARTED BOT
+
+👤 NAME:
+{user.first_name}
+
+🔗 USERNAME:
+{username}
+
+🆔 ID:
+{user.id}
+                """
+            )
+
+        except:
+            pass
 
     # ================= REFERRAL =================
     if context.args:
@@ -443,13 +472,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    # ================= REWARDS =================
-    if data == "rewards_menu":
-
-        await rewards_menu(update, context)
-        return
-
-
     # ================= BACK =================
     if data == "back":
 
@@ -530,7 +552,8 @@ def get_handlers():
         ),
 
         CallbackQueryHandler(
-            buttons
+            buttons,
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back)$"
         ),
 
         MessageHandler(
