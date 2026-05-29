@@ -11,19 +11,15 @@ from handlers.reward import get_reward_handlers
 
 from database.db import init_db, DB_NAME
 
-================= DB INIT =================
 
 async def setup_db():
 await init_db()
 
-================= MAIN =================
 
 async def main():
 
 app = ApplicationBuilder().token(TOKEN).build()
 
-
-# ================= START.PY FIRST =================
 for h in get_handlers():
 
     app.add_handler(
@@ -31,8 +27,6 @@ for h in get_handlers():
         group=0
     )
 
-
-# ================= REWARD.PY SECOND =================
 for h in get_reward_handlers():
 
     app.add_handler(
@@ -40,8 +34,6 @@ for h in get_reward_handlers():
         group=1
     )
 
-
-# ================= ADMIN.PY LAST =================
 for h in get_admin_handlers():
 
     app.add_handler(
@@ -52,8 +44,6 @@ for h in get_admin_handlers():
 
 print("🤖 BOT RUNNING...")
 
-
-# ================= START BOT =================
 await app.initialize()
 
 await app.start()
@@ -62,12 +52,8 @@ await app.updater.start_polling(
     drop_pending_updates=True
 )
 
-
-# ================= KEEP BOT ALIVE =================
 while True:
     await asyncio.sleep(3600)
-
-================= ENTRY =================
 
 if name == "main":
 
