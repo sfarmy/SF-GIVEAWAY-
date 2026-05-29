@@ -215,7 +215,6 @@ async def handle_restore_file(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
 
-    # ================= DOWNLOAD FILE =================
     file = await doc.get_file()
 
 
@@ -247,6 +246,14 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user_id = update.effective_user.id
+
+    # ================= IMPORTANT FIX =================
+    if not (
+        broadcast_state.get(user_id)
+        or msg_state.get(user_id)
+    ):
+        return
+
     text = update.message.text.strip()
 
 
@@ -297,10 +304,10 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "✅ MESSAGE SENT"
             )
 
-        except:
+        except Exception as e:
 
             await update.message.reply_text(
-                "❌ FORMAT:\nUSER_ID MESSAGE"
+                f"❌ ERROR:\n{e}"
             )
 
         msg_state[user_id] = False
