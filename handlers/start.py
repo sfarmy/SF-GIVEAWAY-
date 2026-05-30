@@ -33,7 +33,6 @@ from handlers.reward import rewards_menu
 
 import asyncio
 
-# ================= CHANNELS =================
 CHANNELS = [
     {
         "name": "𝑆𝐹 𝐴𝑅𝑀𝑌 🛡️",
@@ -171,10 +170,10 @@ async def open_main_menu(message, user_id):
 
     await message.edit_text(
         f"""
-🦅 𝑊𝑒𝑙𝑐𝑜𝑚𝑒 𝑇𝑜 𝑆𝐹 𝐺𝑖𝑣𝑒𝑎𝑤𝑎𝑦 💓🤍
-━━━━━━━━━━━━━━━
-🎫 𝐘𝐎𝐔𝐑 𝐓𝐈𝐂𝐊𝐄𝐓𝐒 ➤ {tickets}
-━━━━━━━━━━━━━━━ 
+🦅 𝑊𝑒𝑙𝑐𝑜𝑚𝑒 𝑇𝑜 𝑆𝐹 𝐺𝑖𝑣𝑒𝑎𝑤𝑎𝑦 𝑃𝑎𝑛𝑒𝑙 💓🤍
+━━━━━━━━━━━━━━━━━━
+🎫 𝑌𝑜𝑢𝑟 𝑇𝑖𝑐𝑘𝑒𝑡 ➤ {tickets}
+━━━━━━━━━━━━━━━━━━
         """,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
@@ -202,9 +201,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 admin,
                 f"""
 🚀 𝑁𝐸𝑊 𝑈𝑆𝐸𝑅 𝑆𝑇𝐴𝑅𝑇𝐸𝐷 𝐵𝑂𝑇
-👤 𝑁𝐴𝑀𝐸: {user.first_name}
-🔗 𝑈𝑆𝐸𝑅𝑁𝐴𝑀𝐸: {username}
-🆔 𝐼𝐷: {user.id}
+
+👤 𝑁𝑎𝑚𝑒 : {user.first_name}
+🔗 𝑈𝑠𝑒𝑟𝑛𝑎𝑚𝑒 : {username}
+🆔 𝐼'𝑑 : {user.id}
                 """
             )
 
@@ -257,11 +257,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await msg.edit_text(
         """
-⚠️ 𝑹𝑬𝑸𝑼𝑰𝑹𝑬𝑫 𝑨𝑪𝑻𝑰𝑶𝑵 🚀
-━━━━━━━━━━━━━━━
-📢 𝑱𝑶𝑰𝑵 𝑨𝑳𝑳 𝑪𝑯𝑨𝑵𝑵𝑬𝑳𝑺 & 𝑮𝑹𝑶𝑼𝑷
-━━━━━━━━━━━━━━━
-🔐 𝑻𝑯𝑬𝑵 𝑪𝑳𝑰𝑪𝑲 𝑽𝑬𝑹𝑰𝑭𝒀 ✅
+📢 𝗝𝗢𝗜𝗡 𝗔𝗟𝗟 𝗖𝗛𝗔𝗡𝗡𝗘𝗟 & 𝗚𝗥𝗢𝗨𝗣
+🔐 𝗧𝗛𝗘𝗡 𝗖𝗟𝗜𝗖𝗞 𝗩𝗘𝗥𝗜𝗙𝗬
         """,
         reply_markup=get_join_buttons(
             CHANNELS + [GROUP, GROUP2]
@@ -344,7 +341,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
-                        "🔙 BACK",
+                        "🔙 𝑩𝑨𝑪𝑲 🏠",
                         callback_data="back"
                     )
                 ]
@@ -369,13 +366,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
 
 ━━━━━━━━━━━━━━━
-👥 𝑼𝑺𝑬𝑹𝑺: {total_users}
-🎟 𝑻𝑶𝑻𝑨𝑳 𝑻𝑰𝑪𝑲𝑬𝑻𝑺: {total_tickets}
-📊 𝒀𝑶𝑼𝑹 𝑹𝑨𝑵𝑲: #{rank}
+👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
+🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
+📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
 ━━━━━━━━━━━━━━━
 🔥 𝑻𝑶𝑷 15 𝑼𝑺𝑬𝑹𝑺 🏆
-
-        """
+"""
 
         for i, u in enumerate(users, 1):
 
@@ -383,7 +379,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             text += (
                 f"{i}. {name}"
-                f" ➜ {u[1]} tickets\n"
+                f" ➤ {u[1]} tickets\n"
             )
 
         await q.message.edit_text(
@@ -391,7 +387,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
-                        "🔙 BACK",
+                        "🔙 𝑩𝑨𝑪𝑲 🏠",
                         callback_data="back"
                     )
                 ]
@@ -415,7 +411,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
-                        "🔙 BACK",
+                        "🔙 𝑩𝑨𝑪𝑲 🏠",
                         callback_data="back"
                     )
                 ]
