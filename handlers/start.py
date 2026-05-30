@@ -24,8 +24,7 @@ from database.db import (
     save_claim_history,
     get_all_users,
     get_total_tickets,
-    get_user_rank,
-    get_tickets
+    get_user_rank
 )
 
 from handlers.reward import rewards_menu
@@ -68,7 +67,7 @@ GROUP = {
     "id": -1002708620916
 }
 
-# ➕ ONLY ADDED NEW GC (NO CHANGE ANYTHING ELSE)
+# ➕ ONLY ADDED (NO CHANGE ANYWHERE ELSE)
 GROUP2 = {
     "name": "ANNISERA GC",
     "link": "https://t.me/annisera",
@@ -77,6 +76,7 @@ GROUP2 = {
 
 user_state = {}
 
+# ================= ADMINS =================
 ADMIN_IDS = [7305665779, 7331380618]
 
 
@@ -114,7 +114,6 @@ async def check_force_join(user_id, bot):
     except:
         not_joined.append(GROUP2)
 
-
     return not_joined
 
 
@@ -149,17 +148,34 @@ async def open_main_menu(message, user_id):
     buttons = [
 
         [
-            InlineKeyboardButton("👤 MY INFO", callback_data="myinfo"),
-            InlineKeyboardButton("🏆 LEADERBOARD", callback_data="leaderboard")
+            InlineKeyboardButton(
+                "👤 MY INFO",
+                callback_data="myinfo"
+            ),
+
+            InlineKeyboardButton(
+                "🏆 LEADERBOARD",
+                callback_data="leaderboard"
+            )
         ],
 
         [
-            InlineKeyboardButton("🎁 REDEEM CODE", callback_data="redeem"),
-            InlineKeyboardButton("🎟 DAILY BONUS", callback_data="bonus")
+            InlineKeyboardButton(
+                "🎁 REDEEM CODE",
+                callback_data="redeem"
+            ),
+
+            InlineKeyboardButton(
+                "🎟 DAILY BONUS",
+                callback_data="bonus"
+            )
         ],
 
         [
-            InlineKeyboardButton("🎁 REWARDS", callback_data="rewards_menu")
+            InlineKeyboardButton(
+                "🎁 REWARDS",
+                callback_data="rewards_menu"
+            )
         ]
     ]
 
@@ -294,7 +310,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         r = await claim_daily_bonus(user_id)
 
-        txt = "🎉 +2 TICKETS ADDED" if r == "success" else "⚠️ ALREADY CLAIMED"
+        txt = "🎉 +2 TICKETS ADDED" if r == "success" else "⚠️ BONUS ALREADY CLAIMED"
 
         await q.message.edit_text(
             txt,
@@ -330,6 +346,9 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.type != "private":
         return
 
+    if not update.message:
+        return
+
     user_id = update.effective_user.id
     text = update.message.text.strip()
 
@@ -342,7 +361,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         if await already_claimed_code(user_id, text):
-            await update.message.reply_text("❌ CODE USED")
+            await update.message.reply_text("❌ CODE ALREADY USED")
             user_state[user_id] = None
             return
 
@@ -352,7 +371,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f"❌ {result.upper()}")
         else:
             await save_claim_history(user_id, username, text)
-            await update.message.reply_text(f"🎉 +{result} TICKETS")
+            await update.message.reply_text(f"🎉 +{result} TICKETS ADDED")
 
         user_state[user_id] = None
 
