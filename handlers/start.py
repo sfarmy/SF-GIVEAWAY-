@@ -36,52 +36,47 @@ import asyncio
 # ================= CHANNELS =================
 CHANNELS = [
     {
-        "name": "SF ARMY",
+        "name": "𝑆𝐹 𝐴𝑅𝑀𝑌 🛡️",
         "link": "https://t.me/+TwoCQG8QZPM1OGRl",
         "id": -1003689156772
     },
     {
-        "name": "SF TOOL",
+        "name": "𝑆𝐹 𝐹𝐼𝐿𝐸 📁",
         "link": "https://t.me/anushar_file",
         "id": -1003746793908
     },
     {
-        "name": "SF MM",
+        "name": "𝑆𝐹 𝑀𝑀 💰",
         "link": "https://t.me/EagleMiddleUpdates",
         "id": -1003971360634
     },
     {
-        "name": "SF VOUCHER",
+        "name": "𝑆𝐹 𝑉𝑂𝑈𝐶𝐻𝐸𝑅 🎫",
         "link": "https://t.me/eaglevoucher",
         "id": -1003770492772
     },
     {
-        "name": "SF GIVEAWAY",
+        "name": "𝑆𝐹 𝐺𝐼𝑉𝐸𝐴𝑊𝐴𝑌 🎁",
         "link": "https://t.me/sfgiveaways",
         "id": -1003664665551
     }
 ]
 
 GROUP = {
-    "name": "SF TOOL GC",
+    "name": "𝑆𝐹 𝑇𝑂𝑂𝐿 𝐺𝐶 🛠️",
     "link": "https://t.me/sf_reset",
     "id": -1002708620916
 }
-
-# ➕ ONLY ADDED NEW GC
 GROUP2 = {
-    "name": "GIVEAWAY GC",
+    "name": "𝑆𝐹 𝐺𝐼𝑉𝐸𝐴𝑊𝐴𝑌 𝐺𝐶 👥",
     "link": "https://t.me/annisera",
     "id": -1002759753827
 }
 
 user_state = {}
 
-# ================= ADMINS =================
 ADMIN_IDS = [7305665779, 7331380618]
 
-
-# ================= FORCE JOIN =================
 async def check_force_join(user_id, bot):
 
     not_joined = []
@@ -104,8 +99,6 @@ async def check_force_join(user_id, bot):
 
     except:
         not_joined.append(GROUP)
-
-    # ➕ ONLY ADDED THIS BLOCK
     try:
         member = await bot.get_chat_member(GROUP2["id"], user_id)
 
@@ -117,8 +110,6 @@ async def check_force_join(user_id, bot):
 
     return not_joined
 
-
-# ================= JOIN BUTTONS =================
 def get_join_buttons(channels):
 
     buttons = []
@@ -133,14 +124,13 @@ def get_join_buttons(channels):
 
     buttons.append([
         InlineKeyboardButton(
-            "✅ VERIFY JOIN",
+            "𝑉𝐸𝑅𝐼𝐹𝑌 𝐴𝐶𝐶𝐸𝑆𝑆 ✅",
             callback_data="check_join"
         )
     ])
 
     return InlineKeyboardMarkup(buttons)
 
-# ================= MAIN MENU =================
 async def open_main_menu(message, user_id):
 
     tickets = await get_tickets(user_id)
@@ -149,31 +139,31 @@ async def open_main_menu(message, user_id):
 
         [
             InlineKeyboardButton(
-                "👤 MY INFO",
+                "𝐌𝐘 𝐈𝐍𝐅𝐎 👤",
                 callback_data="myinfo"
             ),
 
             InlineKeyboardButton(
-                "🏆 LEADERBOARD",
+                "𝐋𝐄𝐀𝐃𝐄𝐑𝐁𝐎𝐀𝐑𝐃 🏆",
                 callback_data="leaderboard"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "🎁 REDEEM CODE",
+                "𝐑𝐄𝐃𝐄𝐄𝐌 𝐂𝐎𝐃𝐄 🎁",
                 callback_data="redeem"
             ),
 
             InlineKeyboardButton(
-                "🎟 DAILY BONUS",
+                "𝐃𝐀𝐈𝐋𝐘 𝐁𝐎𝐍𝐔𝐒 🎟",
                 callback_data="bonus"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "🎁 REWARDS",
+                "𝐑𝐄𝐖𝐀𝐑𝐃𝐒 🧧",
                 callback_data="rewards_menu"
             )
         ]
@@ -181,15 +171,14 @@ async def open_main_menu(message, user_id):
 
     await message.edit_text(
         f"""
-🎟️ WELCOME PANEL
-
-🎫 YOUR TICKETS: {tickets}
+🦅 𝑊𝑒𝑙𝑐𝑜𝑚𝑒 𝑇𝑜 𝑆𝐹 𝐺𝑖𝑣𝑒𝑎𝑤𝑎𝑦 💓🤍
+━━━━━━━━━━━━━━━
+🎫 𝐘𝐎𝐔𝐑 𝐓𝐈𝐂𝐊𝐄𝐓𝐒 ➤ {tickets}
+━━━━━━━━━━━━━━━ 
         """,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-
-# ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
@@ -205,7 +194,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await add_user(user.id, username)
 
-    # ================= ADMIN NOTIFY =================
     for admin in ADMIN_IDS:
 
         try:
@@ -213,23 +201,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(
                 admin,
                 f"""
-🚀 NEW USER STARTED BOT
-
-👤 NAME:
-{user.first_name}
-
-🔗 USERNAME:
-{username}
-
-🆔 ID:
-{user.id}
+🚀 𝑁𝐸𝑊 𝑈𝑆𝐸𝑅 𝑆𝑇𝐴𝑅𝑇𝐸𝐷 𝐵𝑂𝑇
+👤 𝑁𝐴𝑀𝐸: {user.first_name}
+🔗 𝑈𝑆𝐸𝑅𝑁𝐴𝑀𝐸: {username}
+🆔 𝐼𝐷: {user.id}
                 """
             )
 
         except:
             pass
 
-    # ================= REFERRAL =================
     if context.args:
 
         try:
@@ -248,10 +229,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         await context.bot.send_message(
                             referrer_id,
                             f"""
-🎉 NEW REFERRAL
-
-👤 {username}
-➕ +10 TICKETS
+🎉 𝑁𝐸𝑊 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿 𝐸𝐴𝑅𝑁𝐸𝐷 🏆✨
+👤 𝑼𝑺𝑬𝑹: {username}
+➕ +10 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 🎫🔥
                             """
                         )
                     except:
@@ -260,28 +240,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             pass
 
-    # ================= ANIMATION =================
     msg = await update.message.reply_text(
-        f"👋 HELLO {username}"
+        f"🦅 𝐇𝐋𝐋𝐋𝐎 {username} 💓🤍"
     )
 
     await asyncio.sleep(1)
 
-    await msg.edit_text("⚡ LOADING PANEL .")
+    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋.")
     await asyncio.sleep(0.5)
 
-    await msg.edit_text("⚡ LOADING PANEL ..")
+    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋..")
     await asyncio.sleep(0.5)
 
-    await msg.edit_text("⚡ LOADING PANEL ...")
+    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋...")
     await asyncio.sleep(1)
 
-    # ================= FORCE JOIN =================
     await msg.edit_text(
         """
-⚠️ JOIN ALL CHANNELS & GROUP
-
-THEN CLICK VERIFY
+⚠️ 𝑹𝑬𝑸𝑼𝑰𝑹𝑬𝑫 𝑨𝑪𝑻𝑰𝑶𝑵 🚀
+━━━━━━━━━━━━━━━
+📢 𝑱𝑶𝑰𝑵 𝑨𝑳𝑳 𝑪𝑯𝑨𝑵𝑵𝑬𝑳𝑺 & 𝑮𝑹𝑶𝑼𝑷
+━━━━━━━━━━━━━━━
+🔐 𝑻𝑯𝑬𝑵 𝑪𝑳𝑰𝑪𝑲 𝑽𝑬𝑹𝑰𝑭𝒀 ✅
         """,
         reply_markup=get_join_buttons(
             CHANNELS + [GROUP, GROUP2]
@@ -289,7 +269,6 @@ THEN CLICK VERIFY
     )
 
 
-# ================= CALLBACKS =================
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -299,8 +278,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     data = q.data
 
-
-    # ================= VERIFY =================
     if data == "check_join":
 
         not_joined = await check_force_join(
@@ -312,7 +289,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await q.message.edit_text(
                 """
-❌ FIRST JOIN ALL CHANNELS
+❌ 𝑭𝑰𝑹𝑺𝑻 𝑱𝑶𝑰𝑵 𝑨𝑳𝑳 𝑪𝑯𝑨𝑵𝑵𝑬𝑳𝑺 📢
                 """,
                 reply_markup=get_join_buttons(
                     not_joined
@@ -326,7 +303,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if bonus == "success":
 
             await q.message.edit_text(
-                "🎁 +15 WELCOME BONUS ADDED"
+                "🎁 𝑊𝐸𝐿𝐶𝑂𝑀𝐸 𝐵𝑂𝑁𝑈𝑆 𝐶𝑅𝐸𝐷𝐼𝑇𝐸𝐷 +15 🏆✨"
             )
 
             await asyncio.sleep(1)
@@ -338,8 +315,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-
-    # ================= MY INFO =================
     if data == "myinfo":
 
         tickets = await get_tickets(user_id)
@@ -353,19 +328,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         text = f"""
-👤 USER INFO
+👤 𝑀𝑌 𝐷𝐴𝑆𝐻𝐵𝑂𝐴𝑅𝐷 📊
 
-🆔 USER ID:
-{user_id}
-
-🎟 TICKETS:
-{tickets}
-
-📊 RANK:
-#{rank}
-
-🔗 REFERRAL LINK:
-{ref_link}
+━━━━━━━━━━━━━━━
+🆔 𝑼𝑺𝑬𝑹 𝑰𝑫: {user_id}
+🎟 𝑻𝑰𝑪𝑲𝑬𝑻𝑺: {tickets}
+📊 𝑹𝑨𝑵𝑲: #{rank}
+━━━━━━━━━━━━━━━
+🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 🚀
         """
 
         await q.message.edit_text(
@@ -383,8 +353,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-
-    # ================= LEADERBOARD =================
     if data == "leaderboard":
 
         users = await top_users()
@@ -398,20 +366,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         rank = await get_user_rank(user_id)
 
         text = f"""
-🏆 LEADERBOARD
+🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
 
-👥 USERS:
-{total_users}
-
-🎟 TOTAL TICKETS:
-{total_tickets}
-
-📊 YOUR RANK:
-#{rank}
-
-━━━━━━━━━━━━━━
-
-🔥 TOP 15 USERS
+━━━━━━━━━━━━━━━
+👥 𝑼𝑺𝑬𝑹𝑺: {total_users}
+🎟 𝑻𝑶𝑻𝑨𝑳 𝑻𝑰𝑪𝑲𝑬𝑻𝑺: {total_tickets}
+📊 𝒀𝑶𝑼𝑹 𝑹𝑨𝑵𝑲: #{rank}
+━━━━━━━━━━━━━━━
+🔥 𝑻𝑶𝑷 15 𝑼𝑺𝑬𝑹𝑺 🏆
 
         """
 
@@ -438,16 +400,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-
-    # ================= DAILY BONUS =================
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
 
         txt = (
-            "🎉 +2 TICKETS ADDED"
+            "🎉 𝑩𝑶𝑵𝑼𝑺 𝑨𝑫𝑫𝑬𝑫 +2 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 🏆✨"
             if r == "success"
-            else "⚠️ BONUS ALREADY CLAIMED"
+            else "⚠️ 𝑩𝑶𝑵𝑼𝑺 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑪𝑳𝑨𝑰𝑴𝑬𝑫 ⏳\n\n🕒 𝑵𝑬𝑿𝑻 𝑩𝑶𝑵𝑼𝑺 𝑨𝑽𝑨𝑰𝑳𝑨𝑩𝑳𝑬 𝑨𝑭𝑻𝑬𝑹 12 𝑯𝑶𝑼𝑹𝑺 🔥"
         )
 
         await q.message.edit_text(
@@ -464,20 +424,19 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-
-    # ================= REDEEM =================
     if data == "redeem":
 
         user_state[user_id] = "redeem"
 
         await q.message.edit_text(
             """
-🎁 SEND REDEEM CODE
+🎁 𝑬𝑵𝑻𝑬𝑹 𝒀𝑶𝑼𝑹 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 🎟️✨
+💡 𝑪𝑳𝑨𝑰𝑴 𝒀𝑶𝑼𝑹 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 𝑵𝑶𝑾 🚀
             """,
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
-                        "🔙 BACK",
+                        "🔙 𝑩𝑨𝑪𝑲 🏠",
                         callback_data="back"
                     )
                 ]
@@ -486,8 +445,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-
-    # ================= BACK =================
     if data == "back":
 
         await open_main_menu(
@@ -497,8 +454,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-
-# ================= TEXT HANDLER =================
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
@@ -511,7 +466,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text.strip()
 
-    # ================= REDEEM =================
     if user_state.get(user_id) == "redeem":
 
         username = (
@@ -523,7 +477,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if await already_claimed_code(user_id, text):
 
             await update.message.reply_text(
-                "❌ CODE ALREADY USED"
+                "❌ 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑼𝑺𝑬𝑫 ⚠️\n\n🔁 𝑻𝑹𝒀 𝑨 𝑵𝑬𝑾 𝑪𝑶𝑫𝑬 𝑻𝑶 𝑪𝑳𝑨𝑰𝑴 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 🎁🔥"
             )
 
             user_state[user_id] = None
@@ -550,13 +504,11 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             await update.message.reply_text(
-                f"🎉 +{result} TICKETS ADDED"
+                f"🎉 𝑹𝑬𝑫𝑬𝑬𝑴 𝑺𝑼𝑪𝑪𝑬𝑺𝑺𝑭𝑼𝑳 ✅🔥\n\n🎟️ +{result} 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 𝑨𝑫𝑫𝑬𝑫 🏆✨"
             )
 
         user_state[user_id] = None
 
-
-# ================= HANDLERS =================
 def get_handlers():
 
     return [
