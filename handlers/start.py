@@ -63,7 +63,7 @@ CHANNELS = [
 
 GROUP = {
     "name": "𝑆𝐹 𝑇𝑂𝑂𝐿 𝐺𝐶 🛠️",
-    "link": "https://t.me/sf_reset",
+    "link": "https://t.me/sftoolgc",
     "id": -1002708620916
 }
 GROUP2 = {
