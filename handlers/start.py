@@ -32,7 +32,6 @@ from database.db import (
 from handlers.reward import rewards_menu
 
 import asyncio
-referral_temp = {}
 
 CHANNELS = [
     {
@@ -178,7 +177,6 @@ async def open_main_menu(message, user_id):
         """,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
@@ -195,66 +193,76 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await add_user(user.id, username)
 
     for admin in ADMIN_IDS:
-
         try:
-
             await context.bot.send_message(
                 admin,
                 f"""
-🚀 𝑁𝐸𝑊 𝑈𝑆𝐸𝑅 𝑆𝑇𝐴𝑅𝑇𝐸𝐷 𝐵𝑂𝑇
+🚀 NEW USER STARTED BOT
 
-👤 𝑁𝑎𝑚𝑒 : {user.first_name}
-🔗 𝑈𝑠𝑒𝑟𝑛𝑎𝑚𝑒 : {username}
-🆔 𝐼'𝑑 : {user.id}
-                """
+👤 NAME: {user.first_name}
+🔗 USERNAME: {username}
+🆔 ID: {user.id}
+"""
             )
-
         except:
             pass
 
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_chat.type != "private":
-        return
-
-    user = update.effective_user
-    username = f"@{user.username}" if user.username else user.first_name
-
-    await add_user(user.id, username)
-
-    # referral store
+    # ✅ REFERRAL SAVE ONLY (NO REWARD HERE)
     if context.args:
         try:
             referrer_id = int(context.args[0])
+
             if referrer_id != user.id:
-                referral_temp[user.id] = referrer_id
+                user_state[user.id] = {
+                    "referrer_id": referrer_id,
+                    "referral_done": False
+                }
+
         except:
             pass
 
-    msg = await update.message.reply_text(f"HELLO {username}")
+    msg = await update.message.reply_text(
+        f"🦅 HELLO {username} 💓🤍"
+    )
 
     await asyncio.sleep(1)
+
     await msg.edit_text("LOADING PANEL.")
     await asyncio.sleep(0.5)
+
     await msg.edit_text("LOADING PANEL..")
     await asyncio.sleep(0.5)
+
     await msg.edit_text("LOADING PANEL...")
     await asyncio.sleep(1)
 
     await msg.edit_text(
-        "JOIN ALL CHANNELS THEN VERIFY",
+        """
+📢 JOIN ALL CHANNELS & GROUP
+🔐 THEN CLICK VERIFY ✅
+""",
         reply_markup=get_join_buttons(CHANNELS + [GROUP, GROUP2])
     )
+    
+async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    q = update.callback_query
+    user_id = q.from_user.id
+
+    await q.answer()
+
+    data = q.data
 
     if data == "check_join":
 
-        not_joined = await check_force_join(user_id, context.bot)
+        not_joined = await check_force_join(
+            user_id,
+            context.bot
+        )
 
         if not_joined:
             await q.message.edit_text(
-                "JOIN ALL CHANNELS",
+                "❌ FIRST JOIN ALL CHANNELS 📢",
                 reply_markup=get_join_buttons(not_joined)
             )
             return
@@ -262,24 +270,47 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         bonus = await give_welcome_bonus(user_id)
 
         if bonus == "success":
-            await q.message.edit_text("WELCOME BONUS +15")
+            await q.message.edit_text(
+                "🎁 WELCOME BONUS +15 CREDITED 🏆✨"
+            )
 
-        if user_id in referral_temp:
-            referrer_id = referral_temp[user_id]
+            await asyncio.sleep(1)
 
-            try:
-                await add_referral(referrer_id, user_id)
-            except:
-                pass
+        # 🔥 REFERRAL SYSTEM (FIXED)
+        state = user_state.get(user_id)
 
-            referral_temp.pop(user_id, None)
+        if state:
+            if not state.get("referral_done"):
+
+                referrer_id = state.get("referrer_id")
+
+                if referrer_id:
+
+                    try:
+                        result = await add_referral(referrer_id, user_id)
+
+                        if result == "success":
+                            await context.bot.send_message(
+                                referrer_id,
+                                f"""
+🎉 NEW REFERRAL CONFIRMED 🏆
+👤 USER: {user_id}
+🎫 +10 TICKETS ADDED 🔥
+"""
+                            )
+                    except:
+                        pass
+
+                user_state[user_id]["referral_done"] = True
 
         await open_main_menu(q.message, user_id)
         return
-        
-        
-        
 
+    if data == "back":
+        await open_main_menu(q.message, user_id)
+        return
+    
+            
     if data == "myinfo":
 
         tickets = await get_tickets(user_id)
