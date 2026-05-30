@@ -32,6 +32,7 @@ from database.db import (
 from handlers.reward import rewards_menu
 
 import asyncio
+referral_temp = {}
 
 CHANNELS = [
     {
@@ -211,106 +212,73 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             pass
 
-    if context.args:
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_chat.type != "private":
+        return
+
+    user = update.effective_user
+    username = f"@{user.username}" if user.username else user.first_name
+
+    await add_user(user.id, username)
+
+    # referral store
+    if context.args:
         try:
             referrer_id = int(context.args[0])
-
             if referrer_id != user.id:
-
-                result = await add_referral(
-                    referrer_id,
-                    user.id
-                )
-
-                if result == "success":
-
-                    try:
-                        await context.bot.send_message(
-                            referrer_id,
-                            f"""
-🎉 𝑵𝑬𝑾 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑬𝑨𝑹𝑵𝑬𝑫  🏆✨
-👤 𝑈𝑆𝐸𝑅: {username}
-🎫 +10 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 🔥
-                            """
-                        )
-                    except:
-                        pass
-
+                referral_temp[user.id] = referrer_id
         except:
             pass
 
-    msg = await update.message.reply_text(
-        f"🦅 𝐇𝐋𝐋𝐋𝐎 {username} 💓🤍"
-    )
+    msg = await update.message.reply_text(f"HELLO {username}")
 
     await asyncio.sleep(1)
-
-    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋.")
+    await msg.edit_text("LOADING PANEL.")
     await asyncio.sleep(0.5)
-
-    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋..")
+    await msg.edit_text("LOADING PANEL..")
     await asyncio.sleep(0.5)
-
-    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋...")
+    await msg.edit_text("LOADING PANEL...")
     await asyncio.sleep(1)
 
     await msg.edit_text(
-        """
-📢 𝐉𝐎𝐈𝐍 𝐀𝐋𝐋 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 & 𝐆𝐑𝐎𝐔𝐏 
-🔐 𝐓𝐇𝐄𝐍 𝐂𝐋𝐈𝐂𝐊 𝐕𝐄𝐑𝐈𝐅𝐘 ✅
-        """,
-        reply_markup=get_join_buttons(
-            CHANNELS + [GROUP, GROUP2]
-        )
+        "JOIN ALL CHANNELS THEN VERIFY",
+        reply_markup=get_join_buttons(CHANNELS + [GROUP, GROUP2])
     )
 
 
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    q = update.callback_query
-    user_id = q.from_user.id
-
-    await q.answer()
-
-    data = q.data
-
     if data == "check_join":
 
-        not_joined = await check_force_join(
-            user_id,
-            context.bot
-        )
+        not_joined = await check_force_join(user_id, context.bot)
 
         if not_joined:
-
             await q.message.edit_text(
-                """
-❌ 𝑭𝑰𝑹𝑺𝑻 𝑱𝑶𝑰𝑵 𝑨𝑳𝑳 𝑪𝑯𝑨𝑵𝑵𝑬𝑳𝑺 📢
-                """,
-                reply_markup=get_join_buttons(
-                    not_joined
-                )
+                "JOIN ALL CHANNELS",
+                reply_markup=get_join_buttons(not_joined)
             )
-
             return
 
         bonus = await give_welcome_bonus(user_id)
 
         if bonus == "success":
+            await q.message.edit_text("WELCOME BONUS +15")
 
-            await q.message.edit_text(
-                "🎁 𝑊𝐸𝐿𝐶𝑂𝑀𝐸 𝐵𝑂𝑁𝑈𝑆 𝐶𝑅𝐸𝐷𝐼𝑇𝐸𝐷 +15 🏆✨"
-            )
+        if user_id in referral_temp:
+            referrer_id = referral_temp[user_id]
 
-            await asyncio.sleep(1)
+            try:
+                await add_referral(referrer_id, user_id)
+            except:
+                pass
 
-        await open_main_menu(
-            q.message,
-            user_id
-        )
+            referral_temp.pop(user_id, None)
 
+        await open_main_menu(q.message, user_id)
         return
+        
+        
+        
 
     if data == "myinfo":
 
