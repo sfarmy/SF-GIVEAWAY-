@@ -197,11 +197,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(
                 admin,
                 f"""
-🚀 NEW USER STARTED BOT
+🚀 𝑁𝐸𝑊 𝑈𝑆𝐸𝑅 𝑆𝑇𝐴𝑅𝑇𝐸𝐷 𝐵𝑂𝑇
 
-👤 NAME: {user.first_name}
-🔗 USERNAME: {username}
-🆔 ID: {user.id}
+👤 𝑁𝑎𝑚𝑒 : {user.first_name}
+🔗 𝑈𝑠𝑒𝑟𝑛𝑎𝑚𝑒 : {username}
+🆔 𝐼'𝑑 : {user.id}
 """
             )
         except:
@@ -222,24 +222,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
 
     msg = await update.message.reply_text(
-        f"🦅 HELLO {username} 💓🤍"
+        f"🦅 𝐇𝐋𝐋𝐋𝐎 {username} 💓🤍"
     )
 
     await asyncio.sleep(1)
 
-    await msg.edit_text("LOADING PANEL.")
+    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋.")
     await asyncio.sleep(0.5)
 
-    await msg.edit_text("LOADING PANEL..")
+    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋..")
     await asyncio.sleep(0.5)
 
-    await msg.edit_text("LOADING PANEL...")
+    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋...")
     await asyncio.sleep(1)
 
     await msg.edit_text(
         """
-📢 JOIN ALL CHANNELS & GROUP
-🔐 THEN CLICK VERIFY ✅
+📢 𝐉𝐎𝐈𝐍 𝐀𝐋𝐋 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 & 𝐆𝐑𝐎𝐔𝐏 
+🔐 𝐓𝐇𝐄𝐍 𝐂𝐋𝐈𝐂𝐊 𝐕𝐄𝐑𝐈𝐅𝐘 ✅
 """,
         reply_markup=get_join_buttons(CHANNELS + [GROUP, GROUP2])
     )
@@ -262,7 +262,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if not_joined:
             await q.message.edit_text(
-                "❌ FIRST JOIN ALL CHANNELS 📢",
+                "❌ 𝑭𝑰𝑹𝑺𝑻 𝑱𝑶𝑰𝑵 𝑨𝑳𝑳 𝑪𝑯𝑨𝑵𝑵𝑬𝑳𝑺 📢",
                 reply_markup=get_join_buttons(not_joined)
             )
             return
@@ -271,7 +271,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if bonus == "success":
             await q.message.edit_text(
-                "🎁 WELCOME BONUS +15 CREDITED 🏆✨"
+                "🎁 𝑊𝐸𝐿𝐶𝑂𝑀𝐸 𝐵𝑂𝑁𝑈𝑆 𝐶𝑅𝐸𝐷𝐼𝑇𝐸𝐷 +15 🏆✨"
             )
 
             await asyncio.sleep(1)
@@ -293,9 +293,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             await context.bot.send_message(
                                 referrer_id,
                                 f"""
-🎉 NEW REFERRAL CONFIRMED 🏆
-👤 USER: {user_id}
-🎫 +10 TICKETS ADDED 🔥
+🎉 𝑵𝑬𝑾 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑬𝑨𝑹𝑵𝑬𝑫  🏆✨
+👤 𝑈𝑆𝐸𝑅: {username}
+🆔 𝐼'𝑑 : {user.id}
+🎫 +10 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 🔥
 """
                             )
                     except:
