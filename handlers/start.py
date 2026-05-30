@@ -325,14 +325,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         text = f"""
-👤 𝑀𝑌 𝐷𝐴𝑆𝐻𝐵𝑂𝐴𝑅𝐷 📊
-
+👤 𝐌𝐘 𝐃𝐀𝐒𝐇𝐁𝐎𝐀𝐑𝐃  📊
 ━━━━━━━━━━━━━━━
-🆔 𝑼𝑺𝑬𝑹 𝑰𝑫: {user_id}
-🎟 𝑻𝑰𝑪𝑲𝑬𝑻𝑺: {tickets}
-📊 𝑹𝑨𝑵𝑲: #{rank}
+🆔 𝑈𝑆𝐸𝑅 𝐼𝐷 : {user_id}
+🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 : {tickets}
+📊 𝑅𝐴𝑁𝐾: #{rank}
 ━━━━━━━━━━━━━━━
-🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 🚀
+🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 
         """
 
         await q.message.edit_text(
@@ -364,7 +363,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
-
 ━━━━━━━━━━━━━━━
 👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
 🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
@@ -379,7 +377,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             text += (
                 f"{i}. {name}"
-                f" ➤ {u[1]} tickets\n"
+                f" ➤ {u[1]} 𝑡𝑖𝑐𝑘𝑒𝑡𝑠 🎫\n"
             )
 
         await q.message.edit_text(
@@ -426,7 +424,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text(
             """
-🎁 𝑬𝑵𝑻𝑬𝑹 𝒀𝑶𝑼𝑹 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 🎟️✨
+🎁 𝑬𝑵𝑻𝑬𝑹 𝒀𝑶𝑼𝑹 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 🎟️
 💡 𝑪𝑳𝑨𝑰𝑴 𝒀𝑶𝑼𝑹 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 𝑵𝑶𝑾 🚀
             """,
             reply_markup=InlineKeyboardMarkup([
@@ -473,7 +471,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if await already_claimed_code(user_id, text):
 
             await update.message.reply_text(
-                "❌ 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑼𝑺𝑬𝑫 ⚠️\n\n🔁 𝑻𝑹𝒀 𝑨 𝑵𝑬𝑾 𝑪𝑶𝑫𝑬 𝑻𝑶 𝑪𝑳𝑨𝑰𝑴 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 🎁🔥"
+                "❌ 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑼𝑺𝑬𝑫 \n\n🔁 𝑻𝑹𝒀 𝑨 𝑵𝑬𝑾 𝑪𝑶𝑫𝑬 𝑻𝑶 𝑪𝑳𝑨𝑰𝑴 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 🎁🔥"
             )
 
             user_state[user_id] = None
