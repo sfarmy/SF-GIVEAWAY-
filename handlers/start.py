@@ -247,7 +247,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
-    user_id = q.from_user.id
+    user = q.from_user
+    user_id = user.id
+    username = f"@{user.username}" if user.username else "No Username"
 
     await q.answer()
 
@@ -276,7 +278,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await asyncio.sleep(1)
 
-        # 🔥 REFERRAL SYSTEM (FIXED)
+        # 🔥 REFERRAL SYSTEM
         state = user_state.get(user_id)
 
         if state:
@@ -293,15 +295,17 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             await context.bot.send_message(
                                 referrer_id,
                                 f"""
-🎉 𝑵𝑬𝑾 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑬𝑨𝑹𝑵𝑬𝑫  🏆✨
-👤 𝑈𝑆𝐸𝑅: {username}
-🆔 𝐼'𝑑 : {user.id}
+🎉 𝑵𝑬𝑾 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑬𝑨𝑹𝑵𝑬𝑫 🏆✨
+
+👤 𝑈𝑆𝐸𝑅: {user.first_name}
+📛 𝑈𝑆𝐸𝑅𝑁𝐴𝑀𝐸: {username}
+🆔 𝐼𝐷: {user.id}
+
 🎫 +10 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 🔥
 """
                             )
-                    except:
-                        pass
-
+                    except Exception as e:
+                        print(e)
                 user_state[user_id]["referral_done"] = True
 
         await open_main_menu(q.message, user_id)
