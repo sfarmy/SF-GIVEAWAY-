@@ -229,9 +229,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         await context.bot.send_message(
                             referrer_id,
                             f"""
-🎉 𝑁𝐸𝑊 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿 𝐸𝐴𝑅𝑁𝐸𝐷 🏆✨
-👤 𝑼𝑺𝑬𝑹: {username}
-➕ +10 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 🎫🔥
+🎉 𝑵𝑬𝑾 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑬𝑨𝑹𝑵𝑬𝑫  🏆✨
+👤 𝑈𝑆𝐸𝑅: {username}
+🎫 +10 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 🔥
                             """
                         )
                     except:
@@ -257,8 +257,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await msg.edit_text(
         """
-📢 𝗝𝗢𝗜𝗡 𝗔𝗟𝗟 𝗖𝗛𝗔𝗡𝗡𝗘𝗟 & 𝗚𝗥𝗢𝗨𝗣
-🔐 𝗧𝗛𝗘𝗡 𝗖𝗟𝗜𝗖𝗞 𝗩𝗘𝗥𝗜𝗙𝗬
+📢 𝐉𝐎𝐈𝐍 𝐀𝐋𝐋 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 & 𝐆𝐑𝐎𝐔𝐏 
+🔐 𝐓𝐇𝐄𝐍 𝐂𝐋𝐈𝐂𝐊 𝐕𝐄𝐑𝐈𝐅𝐘 ✅
         """,
         reply_markup=get_join_buttons(
             CHANNELS + [GROUP, GROUP2]
@@ -377,7 +377,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             text += (
                 f"{i}. {name}"
-                f" ➤ {u[1]} 𝑡𝑖𝑐𝑘𝑒𝑡𝑠 🎫\n"
+                f" ➤ {u[1]} 𝑡𝑖𝑐𝑘𝑒𝑡𝑠 \n"
             )
 
         await q.message.edit_text(
