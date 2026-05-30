@@ -68,7 +68,7 @@ async def rewards_menu(
 🥈 𝑹𝑨𝑵𝑲 𝟲 – 𝟭𝟬 | 𝑺𝑷𝑬𝑪𝑰𝑨𝑳 𝑹𝑬𝑾𝑨𝑹𝑫𝑺
 
 𝟲𝒕𝒉  ➝ 𝑵𝑭𝑻 𝑰𝒏𝒔𝒕𝒂𝒏𝒕 𝑹𝒂𝒎𝒆𝒏
-🔗 http://t.me/nft/InstantRamen-16371
+🔗 http://t.me/nft/InstantRamen-16371 (@rudrasocial)
 𝟕𝒕𝒉  ➝ 𝟭.𝟮𝑲 𝑹𝒆𝒂𝒍 𝑺𝒖𝒃𝒔𝒄𝒓𝒊𝒃𝒆𝒓𝒔 (@zerotixzz)
 𝟖𝒕𝒉  ➝ 𝟭.𝟮𝑲 𝑹𝒆𝒂𝒍 𝑺𝒖𝒃𝒔𝒄𝒓𝒊𝒃𝒆𝒓𝒔 (@zerotixzz)
 𝟗𝒕𝒉  ➝ 𝑨𝑵𝑨𝑵𝑻-𝑿 𝑳𝒊𝒇𝒆𝒕𝒊𝒎𝒆 𝑨𝒄𝒄𝒆𝒔𝒔 (@Zyrox4og)
