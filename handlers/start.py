@@ -190,22 +190,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else user.first_name
     )
 
-    await add_user(user.id, username)
+    is_new_user = await add_user(user.id, username)
 
-    for admin in ADMIN_IDS:
-        try:
-            await context.bot.send_message(
-                admin,
-                f"""
+    if is_new_user:
+        for admin in ADMIN_IDS:
+            try:
+                await context.bot.send_message(
+                    admin,
+                    f"""
 🚀 𝑁𝐸𝑊 𝑈𝑆𝐸𝑅 𝑆𝑇𝐴𝑅𝑇𝐸𝐷 𝐵𝑂𝑇
 
 👤 𝑁𝑎𝑚𝑒 : {user.first_name}
 🔗 𝑈𝑠𝑒𝑟𝑛𝑎𝑚𝑒 : {username}
-🆔 𝐼'𝑑 : {user.id}
+🆔 𝐼𝐷 : {user.id}
 """
-            )
-        except:
-            pass
+                )
+            except:
+                pass
 
     # ✅ REFERRAL SAVE ONLY (NO REWARD HERE)
     if context.args:
@@ -238,7 +239,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await msg.edit_text(
         """
-📢 𝐉𝐎𝐈𝐍 𝐀𝐋𝐋 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 & 𝐆𝐑𝐎𝐔𝐏 
+📢 𝐉𝐎𝐈𝐍 𝐀𝐋𝐋 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 & 𝐆𝐑𝐎𝐔𝐏
 🔐 𝐓𝐇𝐄𝐍 𝐂𝐋𝐈𝐂𝐊 𝐕𝐄𝐑𝐈𝐅𝐘 ✅
 """,
         reply_markup=get_join_buttons(CHANNELS + [GROUP, GROUP2])
