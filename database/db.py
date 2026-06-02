@@ -122,7 +122,7 @@ async def top_users():
             SELECT username, tickets
             FROM users
             ORDER BY tickets DESC
-            LIMIT 15
+            LIMIT 50
         """)
         return await cur.fetchall()
 
