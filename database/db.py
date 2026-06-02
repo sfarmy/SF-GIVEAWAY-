@@ -71,17 +71,27 @@ async def add_user(user_id, username):
         row = await cur.fetchone()
 
         if not row:
+
             await db.execute("""
-                INSERT INTO users (user_id, username, tickets, referrals, welcome_used, referral_used, last_bonus_day, is_banned)
+                INSERT INTO users (
+                    user_id, username, tickets,
+                    referrals, welcome_used,
+                    referral_used, last_bonus_day,
+                    is_banned
+                )
                 VALUES (?, ?, 0, 0, 0, 0, '', 0)
             """, (user_id, username))
-        else:
-            await db.execute(
-                "UPDATE users SET username=? WHERE user_id=?",
-                (username, user_id)
-            )
+
+            await db.commit()
+            return True
+
+        await db.execute(
+            "UPDATE users SET username=? WHERE user_id=?",
+            (username, user_id)
+        )
 
         await db.commit()
+        return False
 
 
 # ================= GET TICKETS =================
