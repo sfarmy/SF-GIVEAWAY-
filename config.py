@@ -1,5 +1,5 @@
 
-TOKEN = "Token chiya kiya beta loda lega mc"
+TOKEN = "7548236397:AAEUfweB2fzZou3Gu6eRElvhaWkxNhwuUh0"
 
 ADMINS = [
     7331380618,
