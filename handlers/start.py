@@ -377,7 +377,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
 📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
 ━━━━━━━━━━━━━━━
-🔥 𝑻𝑶𝑷 15 𝑼𝑺𝑬𝑹𝑺 🏆
+🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
 """
 
         for i, u in enumerate(users, 1):
@@ -410,7 +410,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         txt = (
             "🎉 𝑩𝑶𝑵𝑼𝑺 𝑨𝑫𝑫𝑬𝑫 +2 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 🏆✨"
             if r == "success"
-            else "⚠️ 𝑩𝑶𝑵𝑼𝑺 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑪𝑳𝑨𝑰𝑴𝑬𝑫 ⏳\n\n🕒 𝑵𝑬𝑿𝑻 𝑩𝑶𝑵𝑼𝑺 𝑨𝑽𝑨𝑰𝑳𝑨𝑩𝑳𝑬 𝑨𝑭𝑻𝑬𝑹 12 𝑯𝑶𝑼𝑹𝑺 🔥"
+            else "⚠️ 𝑩𝑶𝑵𝑼𝑺 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑪𝑳𝑨𝑰𝑴𝑬𝑫 ⏳\n\n🕒 𝑵𝑬𝑿𝑻 𝑩𝑶𝑵𝑼𝑺 𝑨𝑽𝑨𝑰𝑳𝑨𝑩𝑳𝑬 𝑻𝑶𝑴𝑶𝑹𝑹𝑶𝑾 🔥"
         )
 
         await q.message.edit_text(
