@@ -1,5 +1,5 @@
 
-TOKEN = "lola lele"
+TOKEN = "7548236397:AAG85nss68YY6SuYkJyjHF_dUHXW2eG20b4"
 
 ADMINS = [
     7331380618,
