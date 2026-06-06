@@ -51,8 +51,18 @@ async def init_db():
         )
         """)
 
-        await db.commit()
+        # 🚀 PERFORMANCE INDEXES
+        await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_users_tickets
+        ON users(tickets)
+        """)
 
+        await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_redeem_used_user_code
+        ON redeem_used(user_id, code)
+        """)
+
+        await db.commit()
 
 # ================= TODAY (IST SAFE) =================
 def get_today():
@@ -106,10 +116,26 @@ async def get_tickets(user_id):
         return row[0] if row else 0
 
 
+# ================= GET REFERRALS =================
+async def get_referrals(user_id):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT referrals FROM users WHERE user_id=?",
+            (user_id,)
+        )
+
+        row = await cur.fetchone()
+
+        return row[0] if row else 0
+
+
 # ================= TOTAL USERS =================
 async def get_total_users():
 
     async with aiosqlite.connect(DB_NAME) as db:
+        
         cur = await db.execute("SELECT COUNT(*) FROM users")
         row = await cur.fetchone()
         return row[0]
