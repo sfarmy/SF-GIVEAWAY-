@@ -26,7 +26,8 @@ from database.db import (
     save_claim_history,
     get_all_users,
     get_total_tickets,
-    get_user_rank
+    get_user_rank,
+    get_referrals
 )
 
 from handlers.reward import rewards_menu
@@ -321,6 +322,8 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         tickets = await get_tickets(user_id)
 
+        referrals = await get_referrals(user_id)
+
         rank = await get_user_rank(user_id)
 
         ref_link = (
@@ -334,6 +337,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ━━━━━━━━━━━━━━━
 🆔 𝑈𝑆𝐸𝑅 𝐼𝐷 : {user_id}
 🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 : {tickets}
+👥 𝑇𝑂𝑇𝐴𝐿 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 : {referrals}
 📊 𝑅𝐴𝑁𝐾: #{rank}
 ━━━━━━━━━━━━━━━
 🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 
