@@ -5,11 +5,13 @@ from datetime import datetime, timezone, timedelta
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "database.db")
 
+# ================= IST TIME (NO PYTZ) =================
 IST = timezone(timedelta(hours=5, minutes=30))
 
 
 # ================= INIT DB =================
 async def init_db():
+
     async with aiosqlite.connect(DB_NAME) as db:
 
         await db.execute("""
@@ -49,37 +51,47 @@ async def init_db():
         )
         """)
 
+        # 🚀 PERFORMANCE INDEXES
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS milestone_claims (
-            user_id INTEGER,
-            milestone INTEGER,
-            PRIMARY KEY(user_id, milestone)
-        )
+        CREATE INDEX IF NOT EXISTS idx_users_tickets
+        ON users(tickets)
+        """)
+
+        await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_redeem_used_user_code
+        ON redeem_used(user_id, code)
         """)
 
         await db.commit()
 
-
-# ================= TODAY =================
+# ================= TODAY (IST SAFE) =================
 def get_today():
     return datetime.now(IST).strftime("%Y-%m-%d")
 
 
-# ================= USERS =================
+# ================= ADD USER =================
 async def add_user(user_id, username):
+
     async with aiosqlite.connect(DB_NAME) as db:
 
         cur = await db.execute(
-            "SELECT 1 FROM users WHERE user_id=?",
+            "SELECT user_id FROM users WHERE user_id=?",
             (user_id,)
         )
         row = await cur.fetchone()
 
         if not row:
-            await db.execute(
-                "INSERT INTO users (user_id, username) VALUES (?, ?)",
-                (user_id, username)
-            )
+
+            await db.execute("""
+                INSERT INTO users (
+                    user_id, username, tickets,
+                    referrals, welcome_used,
+                    referral_used, last_bonus_day,
+                    is_banned
+                )
+                VALUES (?, ?, 0, 0, 0, 0, '', 0)
+            """, (user_id, username))
+
             await db.commit()
             return True
 
@@ -87,12 +99,14 @@ async def add_user(user_id, username):
             "UPDATE users SET username=? WHERE user_id=?",
             (username, user_id)
         )
+
         await db.commit()
         return False
 
 
-# ================= BASIC GETTERS =================
+# ================= GET TICKETS =================
 async def get_tickets(user_id):
+
     async with aiosqlite.connect(DB_NAME) as db:
         cur = await db.execute(
             "SELECT tickets FROM users WHERE user_id=?",
@@ -102,39 +116,43 @@ async def get_tickets(user_id):
         return row[0] if row else 0
 
 
+# ================= GET REFERRALS =================
 async def get_referrals(user_id):
+
     async with aiosqlite.connect(DB_NAME) as db:
+
         cur = await db.execute(
             "SELECT referrals FROM users WHERE user_id=?",
             (user_id,)
         )
+
         row = await cur.fetchone()
+
         return row[0] if row else 0
 
 
-# ================= STATS =================
-async def get_all_users():
-    async with aiosqlite.connect(DB_NAME) as db:
-        cur = await db.execute("SELECT user_id FROM users")
-        rows = await cur.fetchall()
-        return [r[0] for r in rows]
-
-
+# ================= TOTAL USERS =================
 async def get_total_users():
+
     async with aiosqlite.connect(DB_NAME) as db:
+        
         cur = await db.execute("SELECT COUNT(*) FROM users")
         row = await cur.fetchone()
         return row[0]
 
 
+# ================= TOTAL TICKETS =================
 async def get_total_tickets():
+
     async with aiosqlite.connect(DB_NAME) as db:
         cur = await db.execute("SELECT SUM(tickets) FROM users")
         row = await cur.fetchone()
         return row[0] or 0
 
 
+# ================= TOP USERS =================
 async def top_users():
+
     async with aiosqlite.connect(DB_NAME) as db:
         cur = await db.execute("""
             SELECT username, tickets, referrals
@@ -145,7 +163,9 @@ async def top_users():
         return await cur.fetchall()
 
 
+# ================= USER RANK =================
 async def get_user_rank(user_id):
+
     async with aiosqlite.connect(DB_NAME) as db:
 
         cur = await db.execute(
@@ -168,8 +188,9 @@ async def get_user_rank(user_id):
         return higher[0] + 1
 
 
-# ================= BONUSES =================
+# ================= WELCOME BONUS =================
 async def give_welcome_bonus(user_id):
+
     async with aiosqlite.connect(DB_NAME) as db:
 
         cur = await db.execute(
@@ -192,7 +213,9 @@ async def give_welcome_bonus(user_id):
         return "success"
 
 
+# ================= REFERRAL =================
 async def add_referral(referrer_id, user_id):
+
     async with aiosqlite.connect(DB_NAME) as db:
 
         cur = await db.execute(
@@ -204,10 +227,11 @@ async def add_referral(referrer_id, user_id):
         if row and row[0] == 1:
             return "already"
 
-        await db.execute(
-            "UPDATE users SET referral_used=1 WHERE user_id=?",
-            (user_id,)
-        )
+        await db.execute("""
+            UPDATE users
+            SET referral_used = 1
+            WHERE user_id=?
+        """, (user_id,))
 
         await db.execute("""
             UPDATE users
@@ -220,7 +244,9 @@ async def add_referral(referrer_id, user_id):
         return "success"
 
 
+# ================= DAILY BONUS =================
 async def claim_daily_bonus(user_id):
+
     today = get_today()
 
     async with aiosqlite.connect(DB_NAME) as db:
@@ -245,7 +271,28 @@ async def claim_daily_bonus(user_id):
         return "success"
 
 
-# ================= REDEEM =================
+# ================= REDEEM SYSTEM =================
+async def create_redeem_code(code, reward, uses, total_uses):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute("""
+            INSERT OR REPLACE INTO redeem_codes
+            (code, reward, uses_left, total_uses)
+            VALUES (?, ?, ?, ?)
+        """, (code, reward, uses, total_uses))
+        await db.commit()
+
+
+async def list_redeem_codes():
+
+    async with aiosqlite.connect(DB_NAME) as db:
+        cur = await db.execute("""
+            SELECT code, reward, uses_left, total_uses
+            FROM redeem_codes
+        """)
+        return await cur.fetchall()
+
+
 async def use_redeem_code(user_id, username, code):
 
     async with aiosqlite.connect(DB_NAME) as db:
@@ -272,22 +319,22 @@ async def use_redeem_code(user_id, username, code):
             return "expired"
 
         await db.execute(
-            "UPDATE users SET tickets=tickets+? WHERE user_id=?",
+            "UPDATE users SET tickets = tickets + ? WHERE user_id=?",
             (reward, user_id)
         )
 
         await db.execute(
-            "UPDATE redeem_codes SET uses_left=uses_left-1 WHERE code=?",
+            "UPDATE redeem_codes SET uses_left = uses_left - 1 WHERE code=?",
             (code,)
         )
 
         await db.execute(
-            "INSERT INTO redeem_used VALUES (?, ?)",
+            "INSERT INTO redeem_used (user_id, code) VALUES (?, ?)",
             (user_id, code)
         )
 
         await db.execute(
-            "INSERT INTO redeem_logs VALUES (?, ?, ?)",
+            "INSERT INTO redeem_logs (user_id, username, code) VALUES (?, ?, ?)",
             (user_id, username, code)
         )
 
@@ -295,7 +342,27 @@ async def use_redeem_code(user_id, username, code):
         return reward
 
 
+# ================= HELPERS =================
+async def get_all_users():
+
+    async with aiosqlite.connect(DB_NAME) as db:
+        cur = await db.execute("SELECT user_id FROM users")
+        return await cur.fetchall()
+
+
+async def get_redeem_users(code):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+        cur = await db.execute("""
+            SELECT DISTINCT username, user_id
+            FROM redeem_logs
+            WHERE code=?
+        """, (code,))
+        return await cur.fetchall()
+
+
 async def already_claimed_code(user_id, code):
+
     async with aiosqlite.connect(DB_NAME) as db:
         cur = await db.execute(
             "SELECT 1 FROM redeem_used WHERE user_id=? AND code=?",
@@ -305,6 +372,7 @@ async def already_claimed_code(user_id, code):
 
 
 async def save_claim_history(user_id, username, code):
+
     async with aiosqlite.connect(DB_NAME) as db:
 
         cur = await db.execute(
@@ -316,114 +384,8 @@ async def save_claim_history(user_id, username, code):
             return
 
         await db.execute(
-            "INSERT INTO redeem_logs VALUES (?, ?, ?)",
+            "INSERT INTO redeem_logs (user_id, username, code) VALUES (?, ?, ?)",
             (user_id, username, code)
         )
 
         await db.commit()
-
-
-# ================= ADMIN HELPERS (FIXED MISSING IMPORTS) =================
-async def create_redeem_code(code, reward, uses_left):
-    async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute("""
-            INSERT INTO redeem_codes (code, reward, uses_left, total_uses)
-            VALUES (?, ?, ?, ?)
-        """, (code, reward, uses_left, uses_left))
-
-        await db.commit()
-        return True
-
-
-async def list_redeem_codes():
-    async with aiosqlite.connect(DB_NAME) as db:
-        cur = await db.execute("""
-            SELECT code, reward, uses_left, total_uses
-            FROM redeem_codes
-        """)
-        return await cur.fetchall()
-
-
-async def get_redeem_users():
-    async with aiosqlite.connect(DB_NAME) as db:
-        cur = await db.execute("SELECT DISTINCT user_id FROM redeem_used")
-        rows = await cur.fetchall()
-        return [r[0] for r in rows]
-
-
-# ================= MILESTONES =================
-MILESTONE_REWARDS = {
-    3: 5, 5: 10, 10: 30, 20: 30, 30: 30,
-    40: 30, 50: 250, 60: 20, 70: 20,
-    80: 20, 90: 20, 100: 500
-}
-
-
-async def claim_milestone(user_id, milestone):
-    async with aiosqlite.connect(DB_NAME) as db:
-
-        cur = await db.execute(
-            "SELECT referrals FROM users WHERE user_id=?",
-            (user_id,)
-        )
-        row = await cur.fetchone()
-
-        if not row:
-            return "invalid"
-
-        referrals = row[0]
-
-        if referrals < milestone:
-            return "not_reached"
-
-        cur = await db.execute(
-            "SELECT 1 FROM milestone_claims WHERE user_id=? AND milestone=?",
-            (user_id, milestone)
-        )
-        if await cur.fetchone():
-            return "claimed"
-
-        reward = MILESTONE_REWARDS.get(milestone, None)
-
-        if reward is None:
-            return "invalid"
-
-        await db.execute(
-            "UPDATE users SET tickets=tickets+? WHERE user_id=?",
-            (reward, user_id)
-        )
-
-        await db.execute(
-            "INSERT INTO milestone_claims VALUES (?, ?)",
-            (user_id, milestone)
-        )
-
-        await db.commit()
-
-        return reward
-
-
-async def get_available_milestones(user_id):
-    async with aiosqlite.connect(DB_NAME) as db:
-
-        cur = await db.execute(
-            "SELECT referrals FROM users WHERE user_id=?",
-            (user_id,)
-        )
-        row = await cur.fetchone()
-
-        referrals = row[0] if row else 0
-
-        base = [3,5,10,20,30,40,50,60,70,80,90,100]
-
-        available = []
-
-        for m in base:
-            cur = await db.execute(
-                "SELECT 1 FROM milestone_claims WHERE user_id=? AND milestone=?",
-                (user_id, m)
-            )
-            if not await cur.fetchone() and referrals >= m:
-                available.append(m)
-
-        return available
