@@ -27,12 +27,17 @@ from database.db import (
     get_all_users,
     get_total_tickets,
     get_user_rank,
-    get_referrals
+    get_referrals,
+    has_claimed_15_bonus,
+    claim_15_bonus
 )
 
 from handlers.reward import rewards_menu
 
 import asyncio
+
+def get_qualification(referrals: int):
+    return "🟢 QUALIFIED" if referrals >= 15 else "🔴 NOT QUALIFIED"
 
 CHANNELS = [
     {
@@ -323,41 +328,56 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tickets = await get_tickets(user_id)
 
         referrals = await get_referrals(user_id)
+        qualification = get_qualification(referrals)
 
-        rank = await get_user_rank(user_id)
+    rank = await get_user_rank(user_id)
 
-        ref_link = (
-            f"https://t.me/"
-            f"{context.bot.username}"
-            f"?start={user_id}"
-        )
+    ref_link = (
+        f"https://t.me/"
+        f"{context.bot.username}"
+        f"?start={user_id}"
+    )
 
-        text = f"""
+    text = f"""
 👤 𝐌𝐘 𝐃𝐀𝐒𝐇𝐁𝐎𝐀𝐑𝐃  📊
 ━━━━━━━━━━━━━━━
 🆔 𝑈𝑆𝐸𝑅 𝐼𝐷 : {user_id}
 🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 : {tickets}
 👥 𝑇𝑂𝑇𝐴𝐿 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 : {referrals}
 📊 𝑅𝐴𝑁𝐾: #{rank}
+🏆 𝑺𝑻𝑨𝑻𝑼𝑺: {qualification}
 ━━━━━━━━━━━━━━━
-🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 
-        """
+🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link}
+    """
 
-        await q.message.edit_text(
-            text,
-            disable_web_page_preview=True,
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "🔙 𝑩𝑨𝑪𝑲 🏠",
-                        callback_data="back"
-                    )
-                ]
-            ])
+    buttons = []
+
+    if referrals >= 15:
+        buttons.append([
+            InlineKeyboardButton(
+                "🎁 CLAIM 250 BONUS",
+                callback_data="claim_15_bonus"
+            )
+        ])
+
+    buttons.append([
+        InlineKeyboardButton(
+            "🔙 𝑩𝑨𝑪𝑲 🏠",
+            callback_data="back"
         )
+    ])
 
-        return
+    await q.message.edit_text(
+        text,
+        disable_web_page_preview=True,
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
 
+    return
+    
+    
+    
+    
     if data == "leaderboard":
 
         users = await top_users()
@@ -374,6 +394,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
 👥 𝒀𝒐𝒖𝒓 𝑹𝒆𝒇𝒆𝒓𝒓𝒂𝒍𝒔 : {my_referrals}
 📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
+🏆 𝑺𝒕𝒂𝒕𝒖𝒔: {my_status}
 ━━━━━━━━━━━━━━━
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
 
@@ -429,6 +450,26 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         return
+        
+        
+    if data == "claim_15_bonus":
+
+        referrals = await get_referrals(user_id)
+
+    if referrals < 15:
+        await q.message.edit_text("❌ NOT QUALIFIED (15 referrals required)")
+        return
+
+    if await has_claimed_15_bonus(user_id):
+        await q.message.edit_text("⚠️ ALREADY CLAIMED")
+        return
+
+    await claim_15_bonus(user_id)
+
+    await q.message.edit_text(
+        "🎉 250 BONUS SUCCESSFULLY CLAIMED 🏆🔥"
+    )
+    return
 
     if data == "redeem":
 
@@ -526,7 +567,7 @@ def get_handlers():
 
         CallbackQueryHandler(
             buttons,
-            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back)$"
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|claim_15_bonus)$"
         ),
 
         MessageHandler(
