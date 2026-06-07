@@ -362,31 +362,32 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         users = await top_users()
 
-        total_users = len(
-            await get_all_users()
-        )
-
+        total_users = len(await get_all_users())
         total_tickets = await get_total_tickets()
-
         rank = await get_user_rank(user_id)
+        my_referrals = await get_referrals(user_id)
 
         text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
 ━━━━━━━━━━━━━━━
 👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
 🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
+👥 𝒀𝒐𝒖𝒓 𝑹𝒆𝒇𝒆𝒓𝒓𝒂𝒍𝒔 : {my_referrals}
 📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
 ━━━━━━━━━━━━━━━
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
+
 """
 
         for i, u in enumerate(users, 1):
 
             name = u[0] or "Unknown"
+            tickets = u[1]
+            referrals = u[2]
 
             text += (
-                f"{i}. {name}"
-                f" ➤ {u[1]} 𝑡𝑖𝑐𝑘𝑒𝑡𝑠 \n"
+                f"{i}. {name}\n"
+                f"🎟 {tickets} Tickets | 👥 {referrals} Referrals\n\n"
             )
 
         await q.message.edit_text(
@@ -402,7 +403,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         return
-
+        
+        
+        
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
