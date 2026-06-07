@@ -24,16 +24,13 @@ from database.db import (
     use_redeem_code,
     already_claimed_code,
     save_claim_history,
+    get_all_users,
     get_total_tickets,
     get_user_rank,
-    get_referrals,
-    get_available_milestones,
-    claim_milestone
+    get_referrals
 )
 
 from handlers.reward import rewards_menu
-
-from database.db import MILESTONE_REWARDS
 
 import asyncio
 
@@ -165,19 +162,12 @@ async def open_main_menu(message, user_id):
         ],
 
         [
-    InlineKeyboardButton(
-        "🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄𝐒",
-        callback_data="milestones"
-        )
-    ],
-
-        [
-    InlineKeyboardButton(
-        "𝐑𝐄𝐖𝐀𝐑𝐃𝐒 🧧",
-        callback_data="rewards_menu"
-        )
+            InlineKeyboardButton(
+                "𝐑𝐄𝐖𝐀𝐑𝐃𝐒 🧧",
+                callback_data="rewards_menu"
+            )
+        ]
     ]
- ]
 
     await message.edit_text(
         f"""
@@ -370,170 +360,105 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "leaderboard":
 
-        users = await top_users() or []
+        users = await top_users()
 
-        total_users = len(users)
+        total_users = len(await get_all_users())
         total_tickets = await get_total_tickets()
         rank = await get_user_rank(user_id)
         my_referrals = await get_referrals(user_id)
 
-    text = f"""
-🏆 𝐋𝐄𝐀𝐃𝐄𝐑𝐁𝐎𝐀𝐑𝐃 📊🔥
-━━━━━━━━━━━━━━━
-👥 Users : {total_users}
-🎟 Total Tickets : {total_tickets}
-👥 Your Referrals : {my_referrals}
-📊 Your Rank : #{rank}
-━━━━━━━━━━━━━━━
-🔥 TOP USERS 🏆
-"""
-
-    for i, u in enumerate(users, 1):
-        name = u[0] or "Unknown"
-        tickets = u[1]
-        referrals = u[2]
-        text += f"{i}. {name}\n🎟 {tickets} | 👥 {referrals}\n\n"
-
-    await q.message.edit_text(
-        text,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
-        ])
-    )
-
-    return
-    
-  
-
-# ================= MILESTONES =================
-    if data == "milestones":
-
-        referrals = await get_referrals(user_id)
-        available = await get_available_milestones(user_id)
-
-    if available:
-        milestone = available[0]
-        reward = MILESTONE_REWARDS.get(milestone, 0)
-
         text = f"""
-🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐏𝐀𝐍𝐄𝐋
+🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
+━━━━━━━━━━━━━━━
+👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
+🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
+👥 𝒀𝒐𝒖𝒓 𝑹𝒆𝒇𝒆𝒓𝒓𝒂𝒍𝒔 : {my_referrals}
+📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
+━━━━━━━━━━━━━━━
+🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
 
-👥 Referrals: {referrals}
-🏁 Next Target: {milestone}
-
-🎁 Reward: +{reward} Tickets
 """
 
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    f"🎁 CLAIM {milestone}",
-                    callback_data=f"claim_milestone:{milestone}"
-                )
-            ],
-            [
-                InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")
-            ]
-        ]
+        for i, u in enumerate(users, 1):
 
-    else:
-        text = f"""
-🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐏𝐀𝐍𝐄𝐋
+            name = u[0] or "Unknown"
+            tickets = u[1]
+            referrals = u[2]
 
-👥 Referrals: {referrals}
-
-❌ No milestone available yet
-"""
-
-        keyboard = [
-            [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
-        ]
-
-    await q.message.edit_text(
-        text,
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
-    return
-
-    # ================= CLAIM MILESTONE =================
-    if data.startswith("claim_milestone:"):
-
-        try:
-            milestone = int(data.split(":")[1])
-        except:
-            await q.answer("❌ Invalid milestone format", show_alert=True)
-            return
-
-        result = await claim_milestone(user_id, milestone)
-
-        if result == "not_reached":
-            await q.answer("❌ Not reached yet", show_alert=True)
-            return
-
-        if result == "claimed":
-            await q.answer("⚠️ Already claimed", show_alert=True)
-            return
-
-        if result == "invalid":
-            await q.answer("❌ Invalid milestone", show_alert=True)
-            return
+            text += (
+                f"{i}. {name}\n"
+                f"🎟 {tickets} 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 | 👥 {referrals} 𝑅𝑒𝑓𝑒𝑟𝑟𝑎𝑙𝑠\n\n"
+            )
 
         await q.message.edit_text(
-            f"""
-🎉 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐂𝐋𝐀𝐈𝐌𝐄𝐃
-
-🎯 Milestone: {milestone}
-🎟 Reward added successfully
-""",
+            text,
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton(
-                        "🔙 BACK 🏠",
+                        "🔙 𝑩𝑨𝑪𝑲 🏠",
                         callback_data="back"
                     )
                 ]
             ])
         )
+
         return
-
-
-
+        
+        
+        
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
 
-    if r == "success":
-        txt = "🎉 BONUS ADDED +2 TICKETS 🏆✨"
-    else:
-        txt = "⚠️ BONUS ALREADY CLAIMED ⏳\n🕒 COME BACK TOMORROW"
+        txt = (
+            "🎉 𝑩𝑶𝑵𝑼𝑺 𝑨𝑫𝑫𝑬𝑫 +2 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 🏆✨"
+            if r == "success"
+            else "⚠️ 𝑩𝑶𝑵𝑼𝑺 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑪𝑳𝑨𝑰𝑴𝑬𝑫 ⏳\n\n🕒 𝑵𝑬𝑿𝑻 𝑩𝑶𝑵𝑼𝑺 𝑨𝑽𝑨𝑰𝑳𝑨𝑩𝑳𝑬 𝑻𝑶𝑴𝑶𝑹𝑹𝑶𝑾 🔥"
+        )
 
-    await q.message.edit_text(
-        txt,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
-        ])
-    )
+        await q.message.edit_text(
+            txt,
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 𝑩𝑨𝑪𝑲 🏠",
+                        callback_data="back"
+                    )
+                ]
+            ])
+        )
 
-    return
+        return
 
     if data == "redeem":
 
-        user_state[user_id] = {
-        "mode": "redeem"
-    }
+        user_state[user_id] = "redeem"
 
-    await q.message.edit_text(
-        """
-🎁 ENTER YOUR REDEEM CODE 🎟️
-💡 TYPE CODE BELOW 👇
-""",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
-        ])
-    )
+        await q.message.edit_text(
+            """
+🎁 𝑬𝑵𝑻𝑬𝑹 𝒀𝑶𝑼𝑹 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 🎟️
+💡 𝑪𝑳𝑨𝑰𝑴 𝒀𝑶𝑼𝑹 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 𝑵𝑶𝑾 🚀
+            """,
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 𝑩𝑨𝑪𝑲 🏠",
+                        callback_data="back"
+                    )
+                ]
+            ])
+        )
 
-    return
+        return
+
+    if data == "back":
+
+        await open_main_menu(
+            q.message,
+            user_id
+        )
+
+        return
 
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -544,9 +469,10 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user_id = update.effective_user.id
+
     text = update.message.text.strip()
 
-    if user_state.get(user_id, {}).get("mode") == "redeem":
+    if user_state.get(user_id) == "redeem":
 
         username = (
             f"@{update.effective_user.username}"
@@ -554,31 +480,41 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else update.effective_user.first_name
         )
 
-        # ✅ FIXED: inside function + correct indent
         if await already_claimed_code(user_id, text):
 
             await update.message.reply_text(
-                "❌ CODE ALREADY USED"
+                "❌ 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑼𝑺𝑬𝑫 \n\n🔁 𝑻𝑹𝒀 𝑨 𝑵𝑬𝑾 𝑪𝑶𝑫𝑬 𝑻𝑶 𝑪𝑳𝑨𝑰𝑴 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 🎁🔥"
             )
 
-            user_state.pop(user_id, None)
+            user_state[user_id] = None
             return
 
-        result = await use_redeem_code(user_id, username, text)
+        result = await use_redeem_code(
+            user_id,
+            username,
+            text
+        )
 
         if result in ["invalid", "expired", "used"]:
 
-            await update.message.reply_text(f"❌ {result.upper()}")
+            await update.message.reply_text(
+                f"❌ {result.upper()}"
+            )
 
         else:
 
-            await save_claim_history(user_id, username, text)
-
-            await update.message.reply_text(
-                f"🎉 SUCCESS +{result} TICKETS"
+            await save_claim_history(
+                user_id,
+                username,
+                text
             )
 
-        user_state.pop(user_id, None)
+            await update.message.reply_text(
+                f"🎉 𝑹𝑬𝑫𝑬𝑬𝑴 𝑺𝑼𝑪𝑪𝑬𝑺𝑺𝑭𝑼𝑳 ✅🔥\n\n🎟️ +{result} 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 𝑨𝑫𝑫𝑬𝑫 🏆✨"
+            )
+
+        user_state[user_id] = None
+
 def get_handlers():
 
     return [
@@ -590,7 +526,7 @@ def get_handlers():
 
         CallbackQueryHandler(
             buttons,
-            pattern=r"^(check_join|myinfo|leaderboard|bonus|redeem|back|milestones|claim_milestone:\d+)$"
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back)$"
         ),
 
         MessageHandler(
