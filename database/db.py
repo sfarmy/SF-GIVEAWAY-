@@ -155,7 +155,7 @@ async def top_users():
 
     async with aiosqlite.connect(DB_NAME) as db:
         cur = await db.execute("""
-            SELECT username, tickets
+            SELECT username, tickets, referrals
             FROM users
             ORDER BY tickets DESC
             LIMIT 50
