@@ -401,6 +401,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
 
+    return
     
   
 
@@ -410,11 +411,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         referrals = await get_referrals(user_id)
         available = await get_available_milestones(user_id)
 
-        if available:
-            milestone = available[0]
-            reward = MILESTONE_REWARDS.get(milestone, 0)
+    if available:
+        milestone = available[0]
+        reward = MILESTONE_REWARDS.get(milestone, 0)
 
-            text = f"""
+        text = f"""
 🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐏𝐀𝐍𝐄𝐋
 
 👥 Referrals: {referrals}
@@ -423,23 +424,20 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🎁 Reward: +{reward} Tickets
 """
 
-            keyboard = [
-                [
-                    InlineKeyboardButton(
-                        f"🎁 CLAIM {milestone}",
-                        callback_data=f"claim_milestone:{milestone}"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "🔙 BACK 🏠",
-                        callback_data="back"
-                    )
-                ]
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    f"🎁 CLAIM {milestone}",
+                    callback_data=f"claim_milestone:{milestone}"
+                )
+            ],
+            [
+                InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")
             ]
+        ]
 
-        else:
-            text = f"""
+    else:
+        text = f"""
 🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐏𝐀𝐍𝐄𝐋
 
 👥 Referrals: {referrals}
@@ -447,21 +445,16 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ❌ No milestone available yet
 """
 
-            keyboard = [
-                [
-                    InlineKeyboardButton(
-                        "🔙 BACK 🏠",
-                        callback_data="back"
-                    )
-                ]
-            ]
+        keyboard = [
+            [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
+        ]
 
-        await q.message.edit_text(
-            text,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-        return
+    await q.message.edit_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
+    return
 
     # ================= CLAIM MILESTONE =================
     if data.startswith("claim_milestone:"):
@@ -510,49 +503,37 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         r = await claim_daily_bonus(user_id)
 
-        txt = (
-            "🎉 𝑩𝑶𝑵𝑼𝑺 𝑨𝑫𝑫𝑬𝑫 +2 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 🏆✨"
-            if r == "success"
-            else "⚠️ 𝑩𝑶𝑵𝑼𝑺 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑪𝑳𝑨𝑰𝑴𝑬𝑫 ⏳\n\n🕒 𝑵𝑬𝑿𝑻 𝑩𝑶𝑵𝑼𝑺 𝑨𝑽𝑨𝑰𝑳𝑨𝑩𝑳𝑬 𝑻𝑶𝑴𝑶𝑹𝑹𝑶𝑾 🔥"
-        )
+    if r == "success":
+        txt = "🎉 BONUS ADDED +2 TICKETS 🏆✨"
+    else:
+        txt = "⚠️ BONUS ALREADY CLAIMED ⏳\n🕒 COME BACK TOMORROW"
 
-        await q.message.edit_text(
-            txt,
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "🔙 𝑩𝑨𝑪𝑲 🏠",
-                        callback_data="back"
-                    )
-                ]
-            ])
-        )
+    await q.message.edit_text(
+        txt,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
+        ])
+    )
 
-        return
+    return
 
     if data == "redeem":
 
         user_state[user_id] = {
-    "mode": "redeem",
-    "step": "code"
-}
+        "mode": "redeem"
+    }
 
-        await q.message.edit_text(
-            """
-🎁 𝑬𝑵𝑻𝑬𝑹 𝒀𝑶𝑼𝑹 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 🎟️
-💡 𝑪𝑳𝑨𝑰𝑴 𝒀𝑶𝑼𝑹 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 𝑵𝑶𝑾 🚀
-            """,
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "🔙 𝑩𝑨𝑪𝑲 🏠",
-                        callback_data="back"
-                    )
-                ]
-            ])
-        )
+    await q.message.edit_text(
+        """
+🎁 ENTER YOUR REDEEM CODE 🎟️
+💡 TYPE CODE BELOW 👇
+""",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
+        ])
+    )
 
-        return
+    return
 
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -609,7 +590,7 @@ def get_handlers():
 
         CallbackQueryHandler(
             buttons,
-            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|milestones|claim_milestone:\\d+)$"
+            pattern=r"^(check_join|myinfo|leaderboard|bonus|redeem|back|milestones|claim_milestone:\d+)$"
         ),
 
         MessageHandler(
