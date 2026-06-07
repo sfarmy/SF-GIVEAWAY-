@@ -370,50 +370,40 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "leaderboard":
 
-        users = await top_users()
+        users = await top_users() or []
 
-        total_users = len(await get_total_users())
-        total_tickets = await get_total_tickets()
-        rank = await get_user_rank(user_id)
-        my_referrals = await get_referrals(user_id)
+    total_users = len(users)
+    total_tickets = await get_total_tickets()
+    rank = await get_user_rank(user_id)
+    my_referrals = await get_referrals(user_id)
 
-        text = f"""
+    text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
 ━━━━━━━━━━━━━━━
-👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
-🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
-👥 𝑌𝑜𝑢𝑟 𝑟𝑒𝑓𝑓𝑒𝑟𝑎𝑙𝑠 : {my_referrals}
-📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
+👥 Users : {total_users}
+🎟 Total Tickets : {total_tickets}
+👥 Your Referrals : {my_referrals}
+📊 Your Rank : #{rank}
 ━━━━━━━━━━━━━━━
-🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
-
+🔥 TOP USERS 🏆
 """
 
-        for i, u in enumerate(users, 1):
+    for i, u in enumerate(users, 1):
+        name = u[0] or "Unknown"
+        tickets = u[1]
+        referrals = u[2]
 
-            name = u[0] or "Unknown"
-            tickets = u[1]
-            referrals = u[2]
+        text += f"{i}. {name}\n🎟 {tickets} | 👥 {referrals}\n\n"
 
-            text += (
-                f"{i}. {name}\n"
-                f"🎟 {tickets} Tickets | 👥 {referrals} Referrals\n\n"
-            )
-
-        await q.message.edit_text(
-            text,
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "🔙 𝑩𝑨𝑪𝑲 🏠",
-                        callback_data="back"
-                    )
-                ]
-            ])
-        )
-
-        return
-
+    await q.message.edit_text(
+        text,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
+        ])
+    )
+    return
+    
+    
     # ================= BACK =================
     if data == "back":
         await open_main_menu(q.message, user_id)
