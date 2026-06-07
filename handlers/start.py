@@ -488,7 +488,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     # ================= CLAIM MILESTONE =================
-    if data.startswith("claim_milestone"):
+    if data.startswith("claim_milestone:"):
 
         try:
             milestone = int(data.split(":")[1])
@@ -618,7 +618,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🎉 SUCCESS +{result} TICKETS"
             )
 
-        user_state[user_id] = None
+        user_state.pop(user_id, None)
 def get_handlers():
 
     return [
@@ -630,7 +630,7 @@ def get_handlers():
 
         CallbackQueryHandler(
             buttons,
-            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|milestones|claim_milestone.*)$"
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|milestones|claim_milestone:\\d+)$"
         ),
 
         MessageHandler(
