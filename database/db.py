@@ -397,3 +397,39 @@ async def save_claim_history(user_id, username, code):
         )
 
         await db.commit()
+        
+# ================= 15 REFERRAL BONUS =================
+
+async def has_claimed_15_bonus(user_id):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT 1 FROM referral_bonus_claims WHERE user_id=?",
+            (user_id,)
+        )
+
+        return await cur.fetchone() is not None
+
+
+async def claim_15_bonus(user_id):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        await db.execute(
+            "UPDATE users SET tickets = tickets + 250 WHERE user_id=?",
+            (user_id,)
+        )
+
+        await db.execute(
+            """
+            INSERT INTO referral_bonus_claims
+            (user_id, claimed_at)
+            VALUES (?, ?)
+            """,
+            (user_id, get_today())
+        )
+
+        await db.commit()
+
+        return "success"        
