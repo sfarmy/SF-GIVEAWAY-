@@ -400,7 +400,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔙 BACK 🏠", callback_data="back")]
         ])
     )
-    return
+
     
   
 
@@ -532,7 +532,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "redeem":
 
-        user_state[user_id] = {"mode": "redeem"}
+        user_state[user_id] = {
+    "mode": "redeem",
+    "step": "code"
+}
 
         await q.message.edit_text(
             """
