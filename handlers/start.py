@@ -27,7 +27,9 @@ from database.db import (
     get_all_users,
     get_total_tickets,
     get_user_rank,
-    get_referrals
+    get_referrals,
+    get_available_milestones,
+    claim_milestone
 )
 
 from handlers.reward import rewards_menu
@@ -162,12 +164,19 @@ async def open_main_menu(message, user_id):
         ],
 
         [
-            InlineKeyboardButton(
-                "𝐑𝐄𝐖𝐀𝐑𝐃𝐒 🧧",
-                callback_data="rewards_menu"
-            )
-        ]
+    InlineKeyboardButton(
+        "🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄𝐒",
+        callback_data="milestones"
+        )
+    ],
+
+        [
+    InlineKeyboardButton(
+        "𝐑𝐄𝐖𝐀𝐑𝐃𝐒 🧧",
+        callback_data="rewards_menu"
+        )
     ]
+ ]
 
     await message.edit_text(
         f"""
@@ -372,7 +381,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ━━━━━━━━━━━━━━━
 👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
 🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
-👥 𝒀𝒐𝒖𝒓 𝑹𝒆𝒇𝒆𝒓𝒓𝒂𝒍𝒔 : {my_referrals}
+👥 𝑌𝑜𝑢𝑟 𝑟𝑒𝑓𝑓𝑒𝑟𝑎𝑙𝑠 : {my_referrals}
 📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
 ━━━━━━━━━━━━━━━
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
@@ -404,8 +413,119 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
         
+    if data == "milestones":
+
+        referrals = await get_referrals(user_id)
+        available = await get_available_milestones(user_id)
+
+        if available:
+
+            milestone = available[0]
+            reward = MILESTONE_REWARDS.get(milestone, 0) if "MILESTONE_REWARDS" in globals() else 0
+
+            text = f"""
+🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐏𝐀𝐍𝐄𝐋
+
+👥 Referrals: {referrals}
+🏁 Next Target: {milestone}
+
+🎁 Reward: +{reward} Tickets
+
+⚡ Complete referrals to claim reward
+
+#MILESTONE #SF
+"""
+
+            keyboard = [
+                [
+                    InlineKeyboardButton(
+                        f"🎁 CLAIM {milestone}",
+                        callback_data=f"claim_milestone:{milestone}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "🔙 BACK 🏠",
+                        callback_data="back"
+                    )
+                ]
+            ]
+
+        else:
+
+            text = f"""
+🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐏𝐀𝐍𝐄𝐋
+
+👥 Referrals: {referrals}
+
+❌ No milestone available yet
+
+⚡ Invite friends to unlock rewards
+
+#MILESTONE #SF
+"""
+
+            keyboard = [
+                [
+                    InlineKeyboardButton(
+                        "🔙 BACK 🏠",
+                        callback_data="back"
+                    )
+                ]
+            ]
+
+        await q.message.edit_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+        return
+
+
+    if data.startswith("claim_milestone"):
+
+        try:
+            milestone = int(data.split(":")[1])
+        except:
+            await q.answer("❌ Invalid milestone format", show_alert=True)
+            return
+
+        result = await claim_milestone(user_id, milestone)
+
+        if result == "not_reached":
+            await q.answer("❌ Not reached yet", show_alert=True)
+            return
+
+        if result == "claimed":
+            await q.answer("⚠️ Already claimed", show_alert=True)
+            return
+
+        if result == "invalid":
+            await q.answer("❌ Invalid milestone", show_alert=True)
+            return
+
+        await q.message.edit_text(
+            f"""
+🎉 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐂𝐋𝐀𝐈𝐌𝐄𝐃
+
+🎯 Milestone: {milestone}
+🎟 Reward added successfully
+
+#SUCCESS #SF
+""",
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 BACK 🏠",
+                        callback_data="back"
+                    )
+                ]
+            ])
+        )
+
+        return
         
-        
+
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
@@ -526,7 +646,7 @@ def get_handlers():
 
         CallbackQueryHandler(
             buttons,
-            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back)$"
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|milestones|claim_milestone)$"
         ),
 
         MessageHandler(
