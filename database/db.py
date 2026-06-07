@@ -8,7 +8,6 @@ DB_NAME = os.path.join(BASE_DIR, "database.db")
 # ================= IST TIME (NO PYTZ) =================
 IST = timezone(timedelta(hours=5, minutes=30))
 
-
 # ================= INIT DB =================
 async def init_db():
 
@@ -51,6 +50,14 @@ async def init_db():
         )
         """)
 
+        # 🔥 NEW: 15+ REFERRAL BONUS CLAIM TRACKING
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS referral_bonus_claims (
+            user_id INTEGER PRIMARY KEY,
+            claimed_at TEXT
+        )
+        """)
+
         # 🚀 PERFORMANCE INDEXES
         await db.execute("""
         CREATE INDEX IF NOT EXISTS idx_users_tickets
@@ -63,7 +70,8 @@ async def init_db():
         """)
 
         await db.commit()
-
+        
+        
 # ================= TODAY (IST SAFE) =================
 def get_today():
     return datetime.now(IST).strftime("%Y-%m-%d")
