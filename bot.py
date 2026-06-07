@@ -12,42 +12,67 @@ from handlers.reward import get_reward_handlers
 from database.db import init_db, DB_NAME
 
 
-# ================= DB SETUP =================
+# ================= SETUP DB =================
 async def setup_db():
+
     await init_db()
 
 
-# ================= MAIN BOT =================
-def main():
+# ================= MAIN =================
+async def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # ================= HANDLERS =================
+    # ================= START.PY =================
     for h in get_handlers():
-        app.add_handler(h, group=0)
 
+        app.add_handler(
+            h,
+            group=0
+        )
+
+    # ================= REWARD.PY =================
     for h in get_reward_handlers():
-        app.add_handler(h, group=1)
 
+        app.add_handler(
+            h,
+            group=1
+        )
+
+    # ================= ADMIN.PY =================
     for h in get_admin_handlers():
-        app.add_handler(h, group=2)
+
+        app.add_handler(
+            h,
+            group=2
+        )
 
     print("🤖 BOT RUNNING...")
 
-    # ================= RUN BOT =================
-    app.run_polling(drop_pending_updates=True)
+    await app.initialize()
+
+    await app.start()
+
+    await app.updater.start_polling(
+        drop_pending_updates=True
+    )
+
+    while True:
+
+        await asyncio.sleep(3600)
 
 
-# ================= ENTRY POINT =================
+# ================= ENTRY =================
 if __name__ == "__main__":
-
-    import asyncio
 
     asyncio.run(setup_db())
 
     if os.path.exists(DB_NAME):
+
         print("✅ DB READY")
+
     else:
+
         print("⚠️ DB AUTO CREATE MODE")
 
-    main()
+    asyncio.run(main())
