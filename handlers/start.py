@@ -575,14 +575,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-    if data == "back":
-
-        await open_main_menu(
-            q.message,
-            user_id
-        )
-
-        return
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
@@ -638,7 +630,7 @@ def get_handlers():
 
         CallbackQueryHandler(
             buttons,
-            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|milestones|claim_milestone)$"
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|milestones|claim_milestone.*)$"
         ),
 
         MessageHandler(
