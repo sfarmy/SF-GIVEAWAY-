@@ -51,6 +51,14 @@ async def init_db():
         )
         """)
 
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS milestone_claims (
+            user_id INTEGER,
+            milestone INTEGER,
+            PRIMARY KEY(user_id, milestone)
+        )
+        """)
+
         # 🚀 PERFORMANCE INDEXES
         await db.execute("""
         CREATE INDEX IF NOT EXISTS idx_users_tickets
@@ -63,7 +71,8 @@ async def init_db():
         """)
 
         await db.commit()
-
+        
+        
 # ================= TODAY (IST SAFE) =================
 def get_today():
     return datetime.now(IST).strftime("%Y-%m-%d")
@@ -389,3 +398,122 @@ async def save_claim_history(user_id, username, code):
         )
 
         await db.commit()
+        
+        
+# ================= MILESTONES =================
+
+MILESTONE_REWARDS = {
+    3: 5,
+    5: 10,
+    10: 30,
+    20: 30,
+    30: 30,
+    40: 30,
+    50: 250,
+    60: 30,
+    70: 30,
+    80: 30,
+    90: 30,
+    100: 500
+}
+
+
+async def claim_milestone(user_id, milestone):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT referrals FROM users WHERE user_id=?",
+            (user_id,)
+        )
+
+        row = await cur.fetchone()
+
+        if not row:
+            return "invalid"
+
+        referrals = row[0]
+
+        if referrals < milestone:
+            return "not_reached"
+
+        cur = await db.execute(
+            """
+            SELECT 1 FROM milestone_claims
+            WHERE user_id=? AND milestone=?
+            """,
+            (user_id, milestone)
+        )
+
+        if await cur.fetchone():
+            return "claimed"
+
+        reward = MILESTONE_REWARDS.get(milestone)
+
+        if reward is None:
+
+            if milestone > 100 and milestone % 10 == 0:
+                reward = 20
+            else:
+                return "invalid"
+
+        await db.execute(
+            "UPDATE users SET tickets=tickets+? WHERE user_id=?",
+            (reward, user_id)
+        )
+
+        await db.execute(
+            """
+            INSERT INTO milestone_claims
+            (user_id, milestone)
+            VALUES (?, ?)
+            """,
+            (user_id, milestone)
+        )
+
+        await db.commit()
+
+        return reward
+
+
+async def get_available_milestones(user_id):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT referrals FROM users WHERE user_id=?",
+            (user_id,)
+        )
+
+        row = await cur.fetchone()
+
+        referrals = row[0] if row else 0
+
+        milestones = [
+            3, 5, 10, 20, 30, 40,
+            50, 60, 70, 80, 90, 100
+        ]
+
+        current = 110
+
+        while current <= referrals:
+            milestones.append(current)
+            current += 10
+
+        available = []
+
+        for m in milestones:
+
+            cur = await db.execute(
+                """
+                SELECT 1 FROM milestone_claims
+                WHERE user_id=? AND milestone=?
+                """,
+                (user_id, m)
+            )
+
+            if not await cur.fetchone():
+                if referrals >= m:
+                    available.append(m)
+
+        return available        
