@@ -24,7 +24,6 @@ from database.db import (
     use_redeem_code,
     already_claimed_code,
     save_claim_history,
-    get_all_users,
     get_total_tickets,
     get_user_rank,
     get_referrals,
@@ -373,7 +372,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         users = await top_users()
 
-        total_users = len(await get_all_users())
+        total_users = len(await get_total_users())
         total_tickets = await get_total_tickets()
         rank = await get_user_rank(user_id)
         my_referrals = await get_referrals(user_id)
@@ -414,7 +413,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         return
-        
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     q = update.callback_query
@@ -430,7 +428,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await open_main_menu(q.message, user_id)
         return
 
-    # ================= MILESTONES =================
+# ================= MILESTONES =================
     if data == "milestones":
 
         referrals = await get_referrals(user_id)
@@ -488,6 +486,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+
     # ================= CLAIM MILESTONE =================
     if data.startswith("claim_milestone"):
 
@@ -528,7 +527,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
         return
-
 
 
 
