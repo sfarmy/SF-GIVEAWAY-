@@ -34,6 +34,8 @@ from database.db import (
 
 from handlers.reward import rewards_menu
 
+from database.db import MILESTONE_REWARDS
+
 import asyncio
 
 CHANNELS = [
@@ -413,15 +415,30 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
         
+async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    q = update.callback_query
+    user = q.from_user
+    user_id = user.id
+    username = f"@{user.username}" if user.username else "No Username"
+
+    await q.answer()
+    data = q.data
+
+    # ================= BACK =================
+    if data == "back":
+        await open_main_menu(q.message, user_id)
+        return
+
+    # ================= MILESTONES =================
     if data == "milestones":
 
         referrals = await get_referrals(user_id)
         available = await get_available_milestones(user_id)
 
         if available:
-
             milestone = available[0]
-            reward = MILESTONE_REWARDS.get(milestone, 0) if "MILESTONE_REWARDS" in globals() else 0
+            reward = MILESTONE_REWARDS.get(milestone, 0)
 
             text = f"""
 🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐏𝐀𝐍𝐄𝐋
@@ -430,10 +447,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🏁 Next Target: {milestone}
 
 🎁 Reward: +{reward} Tickets
-
-⚡ Complete referrals to claim reward
-
-#MILESTONE #SF
 """
 
             keyboard = [
@@ -452,17 +465,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
 
         else:
-
             text = f"""
 🎯 𝐌𝐈𝐋𝐄𝐒𝐓𝐎𝐍𝐄 𝐏𝐀𝐍𝐄𝐋
 
 👥 Referrals: {referrals}
 
 ❌ No milestone available yet
-
-⚡ Invite friends to unlock rewards
-
-#MILESTONE #SF
 """
 
             keyboard = [
@@ -478,10 +486,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-
         return
 
-
+    # ================= CLAIM MILESTONE =================
     if data.startswith("claim_milestone"):
 
         try:
@@ -510,8 +517,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 🎯 Milestone: {milestone}
 🎟 Reward added successfully
-
-#SUCCESS #SF
 """,
             reply_markup=InlineKeyboardMarkup([
                 [
@@ -522,9 +527,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ]
             ])
         )
-
         return
-        
+
+
+
 
     if data == "bonus":
 
@@ -552,7 +558,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "redeem":
 
-        user_state[user_id] = "redeem"
+        user_state[user_id] = {"mode": "redeem"}
 
         await q.message.edit_text(
             """
@@ -579,7 +585,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         return
-
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_chat.type != "private":
@@ -589,10 +594,9 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user_id = update.effective_user.id
-
     text = update.message.text.strip()
 
-    if user_state.get(user_id) == "redeem":
+    if user_state.get(user_id, {}).get("mode") == "redeem":
 
         username = (
             f"@{update.effective_user.username}"
@@ -600,41 +604,31 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else update.effective_user.first_name
         )
 
+        # ✅ FIXED: inside function + correct indent
         if await already_claimed_code(user_id, text):
 
             await update.message.reply_text(
-                "❌ 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑼𝑺𝑬𝑫 \n\n🔁 𝑻𝑹𝒀 𝑨 𝑵𝑬𝑾 𝑪𝑶𝑫𝑬 𝑻𝑶 𝑪𝑳𝑨𝑰𝑴 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 🎁🔥"
+                "❌ CODE ALREADY USED"
             )
 
-            user_state[user_id] = None
+            user_state.pop(user_id, None)
             return
 
-        result = await use_redeem_code(
-            user_id,
-            username,
-            text
-        )
+        result = await use_redeem_code(user_id, username, text)
 
         if result in ["invalid", "expired", "used"]:
 
-            await update.message.reply_text(
-                f"❌ {result.upper()}"
-            )
+            await update.message.reply_text(f"❌ {result.upper()}")
 
         else:
 
-            await save_claim_history(
-                user_id,
-                username,
-                text
-            )
+            await save_claim_history(user_id, username, text)
 
             await update.message.reply_text(
-                f"🎉 𝑹𝑬𝑫𝑬𝑬𝑴 𝑺𝑼𝑪𝑪𝑬𝑺𝑺𝑭𝑼𝑳 ✅🔥\n\n🎟️ +{result} 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 𝑨𝑫𝑫𝑬𝑫 🏆✨"
+                f"🎉 SUCCESS +{result} TICKETS"
             )
 
         user_state[user_id] = None
-
 def get_handlers():
 
     return [
