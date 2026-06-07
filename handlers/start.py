@@ -413,15 +413,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         return
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    q = update.callback_query
-    user = q.from_user
-    user_id = user.id
-    username = f"@{user.username}" if user.username else "No Username"
-
-    await q.answer()
-    data = q.data
 
     # ================= BACK =================
     if data == "back":
