@@ -417,3 +417,15 @@ async def get_available_milestones(user_id):
                 available.append(m)
 
         return available
+        
+        
+async def create_redeem_code(code, reward, uses_left):
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        await db.execute("""
+            INSERT INTO redeem_codes (code, reward, uses_left, total_uses)
+            VALUES (?, ?, ?, ?)
+        """, (code, reward, uses_left, uses_left))
+
+        await db.commit()
+        return True        
