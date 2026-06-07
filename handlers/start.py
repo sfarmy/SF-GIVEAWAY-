@@ -372,13 +372,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         users = await top_users() or []
 
-    total_users = len(users)
-    total_tickets = await get_total_tickets()
-    rank = await get_user_rank(user_id)
-    my_referrals = await get_referrals(user_id)
+        total_users = len(users)
+        total_tickets = await get_total_tickets()
+        rank = await get_user_rank(user_id)
+        my_referrals = await get_referrals(user_id)
 
     text = f"""
-🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
+🏆 𝐋𝐄𝐀𝐃𝐄𝐑𝐁𝐎𝐀𝐑𝐃 📊🔥
 ━━━━━━━━━━━━━━━
 👥 Users : {total_users}
 🎟 Total Tickets : {total_tickets}
@@ -402,7 +402,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
     return
-    
     
     # ================= BACK =================
     if data == "back":
