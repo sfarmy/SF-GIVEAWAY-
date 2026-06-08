@@ -451,3 +451,9 @@ async def can_claim_reward(user_id):
 
         return referrals >= 15 and claimed == 0        
         
+        
+        
+async def migrate_db():
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute("ALTER TABLE users ADD COLUMN reward_claimed INTEGER DEFAULT 0")
+        await db.commit()        
