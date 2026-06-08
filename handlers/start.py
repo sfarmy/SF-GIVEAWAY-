@@ -423,7 +423,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
 
-    return
+        return
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
