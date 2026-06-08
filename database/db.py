@@ -1,594 +1,257 @@
-#START.PY (FULL UPDATED CODE)
+import aiosqlite
+import os
+from datetime import datetime, timezone, timedelta
 
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup
-)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_NAME = os.path.join(BASE_DIR, "database.db")
 
-from telegram.ext import (
-    CommandHandler,
-    CallbackQueryHandler,
-    MessageHandler,
-    ContextTypes,
-    filters
-)
+IST = timezone(timedelta(hours=5, minutes=30))
 
-from database.db import (
-    add_user,
-    get_tickets,
-    top_users,
-    add_referral,
-    claim_daily_bonus,
-    give_welcome_bonus,
-    use_redeem_code,
-    already_claimed_code,
-    save_claim_history,
-    get_all_users,
-    get_total_tickets,
-    get_user_rank,
-    get_referrals,
-    claim_qualified_reward
-)
 
-from handlers.reward import rewards_menu
+# ================= INIT DB =================
+async def init_db():
+    async with aiosqlite.connect(DB_NAME) as db:
 
-import asyncio
-
-CHANNELS = [
-    {
-        "name": "𝑆𝐹 𝐴𝑅𝑀𝑌 🛡️",
-        "link": "https://t.me/+TwoCQG8QZPM1OGRl",
-        "id": -1003689156772
-    },
-    {
-        "name": "𝑆𝐹 𝐹𝐼𝐿𝐸 📁",
-        "link": "https://t.me/anushar_file",
-        "id": -1003746793908
-    },
-    {
-        "name": "𝑆𝐹 𝑀𝑀 💰",
-        "link": "https://t.me/EagleMiddleUpdates",
-        "id": -1003971360634
-    },
-    {
-        "name": "𝑆𝐹 𝑉𝑂𝑈𝐶𝐻𝐸𝑅 🎫",
-        "link": "https://t.me/eaglevoucher",
-        "id": -1003770492772
-    },
-    {
-        "name": "𝑆𝐹 𝐺𝐼𝑉𝐸𝐴𝑊𝐴𝑌 🎁",
-        "link": "https://t.me/sfgiveaways",
-        "id": -1003664665551
-    }
-]
-
-GROUP = {
-    "name": "𝑆𝐹 𝑇𝑂𝑂𝐿 𝐺𝐶 🛠️",
-    "link": "https://t.me/sftoolgc",
-    "id": -1002708620916
-}
-GROUP2 = {
-    "name": "𝑆𝐹 𝐺𝐼𝑉𝐸𝐴𝑊𝐴𝑌 𝐺𝐶 👥",
-    "link": "https://t.me/annisera",
-    "id": -1002759753827
-}
-
-user_state = {}
-
-ADMIN_IDS = [7305665779, 7331380618]
-
-async def check_force_join(user_id, bot):
-
-    not_joined = []
-
-    for c in CHANNELS:
-        try:
-            member = await bot.get_chat_member(c["id"], user_id)
-
-            if member.status in ["left", "kicked"]:
-                not_joined.append(c)
-
-        except:
-            not_joined.append(c)
-
-    try:
-        member = await bot.get_chat_member(GROUP["id"], user_id)
-
-        if member.status in ["left", "kicked"]:
-            not_joined.append(GROUP)
-
-    except:
-        not_joined.append(GROUP)
-    try:
-        member = await bot.get_chat_member(GROUP2["id"], user_id)
-
-        if member.status in ["left", "kicked"]:
-            not_joined.append(GROUP2)
-
-    except:
-        not_joined.append(GROUP2)
-
-    return not_joined
-
-def get_join_buttons(channels):
-
-    buttons = []
-
-    for c in channels:
-        buttons.append([
-            InlineKeyboardButton(
-                f"📢 {c['name']}",
-                url=c["link"]
-            )
-        ])
-
-    buttons.append([
-        InlineKeyboardButton(
-            "𝑉𝐸𝑅𝐼𝐹𝑌 𝐴𝐶𝐶𝐸𝑆𝑆 ✅",
-            callback_data="check_join"
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT,
+            tickets INTEGER DEFAULT 0,
+            referrals INTEGER DEFAULT 0,
+            welcome_used INTEGER DEFAULT 0,
+            referral_used INTEGER DEFAULT 0,
+            last_bonus_day TEXT DEFAULT '',
+            is_banned INTEGER DEFAULT 0,
+            reward_claimed INTEGER DEFAULT 0
         )
-    ])
+        """)
 
-    return InlineKeyboardMarkup(buttons)
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS redeem_codes (
+            code TEXT PRIMARY KEY,
+            reward INTEGER,
+            uses_left INTEGER,
+            total_uses INTEGER
+        )
+        """)
 
-async def open_main_menu(message, user_id):
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS redeem_used (
+            user_id INTEGER,
+            code TEXT
+        )
+        """)
 
-    tickets = await get_tickets(user_id)
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS redeem_logs (
+            user_id INTEGER,
+            username TEXT,
+            code TEXT
+        )
+        """)
 
-    buttons = [
+        await db.commit()
 
-        [
-            InlineKeyboardButton(
-                "𝐌𝐘 𝐈𝐍𝐅𝐎 👤",
-                callback_data="myinfo"
-            ),
 
-            InlineKeyboardButton(
-                "𝐋𝐄𝐀𝐃𝐄𝐑𝐁𝐎𝐀𝐑𝐃 🏆",
-                callback_data="leaderboard"
-            )
-        ],
+# ================= HELPERS =================
+def get_today():
+    return datetime.now(IST).strftime("%Y-%m-%d")
 
-        [
-            InlineKeyboardButton(
-                "𝐑𝐄𝐃𝐄𝐄𝐌 𝐂𝐎𝐃𝐄 🎁",
-                callback_data="redeem"
-            ),
 
-            InlineKeyboardButton(
-                "𝐃𝐀𝐈𝐋𝐘 𝐁𝐎𝐍𝐔𝐒 🎟",
-                callback_data="bonus"
-            )
-        ],
+# ================= USER =================
+async def add_user(user_id, username):
+    async with aiosqlite.connect(DB_NAME) as db:
 
-        [
-            InlineKeyboardButton(
-                "𝐑𝐄𝐖𝐀𝐑𝐃𝐒 🧧",
-                callback_data="rewards_menu"
-            )
-        ]
-    ]
+        cur = await db.execute(
+            "SELECT user_id FROM users WHERE user_id=?",
+            (user_id,)
+        )
+        row = await cur.fetchone()
 
-    await message.edit_text(
-        f"""
-🦅 𝑊𝑒𝑙𝑐𝑜𝑚𝑒 𝑇𝑜 𝑆𝐹 𝐺𝑖𝑣𝑒𝑎𝑤𝑎𝑦 𝑃𝑎𝑛𝑒𝑙 💓🤍
-━━━━━━━━━━━━━━━━━━
-🎫 𝑌𝑜𝑢𝑟 𝑇𝑖𝑐𝑘𝑒𝑡 ➤ {tickets}
-━━━━━━━━━━━━━━━━━━
-        """,
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not row:
+            await db.execute("""
+                INSERT INTO users (user_id, username)
+                VALUES (?, ?)
+            """, (user_id, username))
 
-    if update.effective_chat.type != "private":
-        return
+            await db.commit()
+            return True
 
-    user = update.effective_user
-
-    username = (
-        f"@{user.username}"
-        if user.username
-        else user.first_name
-    )
-
-    is_new_user = await add_user(user.id, username)
-
-    if is_new_user:
-        for admin in ADMIN_IDS:
-            try:
-                await context.bot.send_message(
-                    admin,
-                    f"""
-🚀 𝑁𝐸𝑊 𝑈𝑆𝐸𝑅 𝑆𝑇𝐴𝑅𝑇𝐸𝐷 𝐵𝑂𝑇
-
-👤 𝑁𝑎𝑚𝑒 : {user.first_name}
-🔗 𝑈𝑠𝑒𝑟𝑛𝑎𝑚𝑒 : {username}
-🆔 𝐼𝐷 : {user.id}
-"""
-                )
-            except:
-                pass
-
-    # ✅ REFERRAL SAVE ONLY (NO REWARD HERE)
-    if context.args:
-        try:
-            referrer_id = int(context.args[0])
-
-            if referrer_id != user.id:
-                user_state[user.id] = {
-                    "referrer_id": referrer_id,
-                    "referral_done": False
-                }
-
-        except:
-            pass
-
-    msg = await update.message.reply_text(
-        f"🦅 𝐇𝐋𝐋𝐋𝐎 {username} 💓🤍"
-    )
-
-    await asyncio.sleep(1)
-
-    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋.")
-    await asyncio.sleep(0.5)
-
-    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋..")
-    await asyncio.sleep(0.5)
-
-    await msg.edit_text("🦅 𝐋𝐎𝐀𝐃𝐈𝐍𝐆 𝐏𝐀𝐍𝐄𝐋...")
-    await asyncio.sleep(1)
-
-    await msg.edit_text(
-        """
-📢 𝐉𝐎𝐈𝐍 𝐀𝐋𝐋 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 & 𝐆𝐑𝐎𝐔𝐏
-🔐 𝐓𝐇𝐄𝐍 𝐂𝐋𝐈𝐂𝐊 𝐕𝐄𝐑𝐈𝐅𝐘 ✅
-""",
-        reply_markup=get_join_buttons(CHANNELS + [GROUP, GROUP2])
-    )
-    
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    q = update.callback_query
-    user = q.from_user
-    user_id = user.id
-    username = f"@{user.username}" if user.username else "No Username"
-
-    await q.answer()
-
-    data = q.data
-
-    if data == "check_join":
-
-        not_joined = await check_force_join(
-            user_id,
-            context.bot
+        await db.execute(
+            "UPDATE users SET username=? WHERE user_id=?",
+            (username, user_id)
         )
 
-        if not_joined:
-            await q.message.edit_text(
-                "❌ 𝑭𝑰𝑹𝑺𝑻 𝑱𝑶𝑰𝑵 𝑨𝑳𝑳 𝑪𝑯𝑨𝑵𝑵𝑬𝑳𝑺 📢",
-                reply_markup=get_join_buttons(not_joined)
-            )
-            return
+        await db.commit()
+        return False
 
-        bonus = await give_welcome_bonus(user_id)
 
-        if bonus == "success":
-            await q.message.edit_text(
-                "🎁 𝑊𝐸𝐿𝐶𝑂𝑀𝐸 𝐵𝑂𝑁𝑈𝑆 𝐶𝑅𝐸𝐷𝐼𝑇𝐸𝐷 +15 🏆✨"
-            )
-
-            await asyncio.sleep(1)
-
-        # 🔥 REFERRAL SYSTEM
-        state = user_state.get(user_id)
-
-        if isinstance(state, dict):
-            if not state.get("referral_done"):
-
-                referrer_id = state.get("referrer_id")
-
-                if referrer_id:
-
-                    try:
-                        result = await add_referral(referrer_id, user_id)
-
-                        if result == "success":
-                            await context.bot.send_message(
-                                referrer_id,
-                                f"""
-🎉 𝑵𝑬𝑾 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑬𝑨𝑹𝑵𝑬𝑫 🏆✨
-
-👤 𝑈𝑆𝐸𝑅: {user.first_name}
-📛 𝑈𝑆𝐸𝑅𝑁𝐴𝑀𝐸: {username}
-🆔 𝐼𝐷: {user.id}
-
-🎫 +10 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 🔥
-"""
-                            )
-                    except Exception as e:
-                        print(e)
-                user_state[user_id]["referral_done"] = True
-
-        await open_main_menu(q.message, user_id)
-        return
-
-    if data == "back":
-        await open_main_menu(q.message, user_id)
-        return
-    
-            
-    if data == "myinfo":
-
-        tickets = await get_tickets(user_id)
-
-        referrals = await get_referrals(user_id)
-        
-        status = (
-    "✅ QUALIFIED"
-    if referrals >= 15
-    else "❌ NOT QUALIFIED"
-)
-
-        rank = await get_user_rank(user_id)
-
-        ref_link = (
-            f"https://t.me/"
-            f"{context.bot.username}"
-            f"?start={user_id}"
+# ================= BASIC GETTERS =================
+async def get_tickets(user_id):
+    async with aiosqlite.connect(DB_NAME) as db:
+        cur = await db.execute(
+            "SELECT tickets FROM users WHERE user_id=?",
+            (user_id,)
         )
-
-        text = f"""
-👤 𝐌𝐘 𝐃𝐀𝐒𝐇𝐁𝐎𝐀𝐑𝐃  📊
-━━━━━━━━━━━━━━━━━━━━━━━
-🆔 𝑈𝑆𝐸𝑅 𝐼𝐷 : {user_id}
-🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 : {tickets}
-👥 𝑇𝑂𝑇𝐴𝐿 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 : {referrals}
-🏅 𝑆𝑇𝐴𝑇𝑈𝑆 : {status}
-📊 𝑅𝐴𝑁𝐾: #{rank}
-━━━━━━━━━━━━━━━━━━━━━━━
-🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 
-        """
-        buttons = [
-        [
-            InlineKeyboardButton(
-                "🎁 ULTRA BONUS 🏆",
-                callback_data="ultra_bonus"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "🔙 BACK 🏠",
-                callback_data="back"
-            )
-        ]
-    ]
-
-        await q.message.edit_text(
-        text,
-        disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-
-        return
-
-    if data == "ultra_bonus":
-
-        result = await claim_qualified_reward(user_id)
-
-        if result == "success":
-            txt = "🎉 ULTRA BONUS +250 TICKETS CLAIMED 🏆🔥"
-        elif result == "not_eligible":
-            txt = "❌ 15 REFERRALS REQUIRED"
-        elif result == "already_claimed":
-            txt = "⚠️ ALREADY CLAIMED"
-        else:
-            txt = "❌ ERROR"
-
-        await q.message.edit_text(
-            txt,
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "🔙 BACK 🏠",
-                    callback_data="myinfo"
-                )
-            ]
-        ])
-    )
-
-        return
+        row = await cur.fetchone()
+        return row[0] if row else 0
 
 
-    if data == "leaderboard":
-        users = await top_users()
-
-        total_users = len(
-        await get_all_users()
-    )
-
-        total_tickets = await get_total_tickets()
-    
-        rank = await get_user_rank(user_id)
-        referrals = await get_referrals(user_id)
-        status = (
-    "✅ QUALIFIED"
-    if referrals >= 15
-    else "❌ NOT QUALIFIED"
-)
-
-        text = f"""
-🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
-━━━━━━━━━━━━━━━━━━━━━━━
-👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
-🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
-👥 𝑌𝑜𝑢𝑟 𝑅𝑒𝑓𝑒𝑟𝑟𝑎𝑙𝑠 : {referrals}
-🏅 𝑌𝑜𝑢𝑟 𝑆𝑡𝑎𝑡𝑢𝑠 : {status}
-📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
-━━━━━━━━━━━━━━━━━━━━━━━
-🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
-"""
-
-        for i, u in enumerate(users, 1):
-            name = u[0] or "Unknown"
-            tickets = u[1]
-            referrals = u[2]
-            
-            status = (
-        "✅ QUALIFIED"
-        if referrals >= 15
-        else "❌ NOT QUALIFIED"
-    )
-
-
-            text += (
-                f"{i}. {name}\n"
-                f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
-                f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n"
-                f"🏅 STATUS ➤ {status}\n\n"
-    )
-        
-
-        await q.message.edit_text(
-        text,
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "🔙 𝑩𝑨𝑪𝑲 🏠",
-                    callback_data="back"
-                )
-            ]
-        ])
-    )
-
-        return
-    
-    if data == "bonus":
-
-        r = await claim_daily_bonus(user_id)
-
-        txt = (
-            "🎉 𝑩𝑶𝑵𝑼𝑺 𝑨𝑫𝑫𝑬𝑫 +2 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 🏆✨"
-            if r == "success"
-            else "⚠️ 𝑩𝑶𝑵𝑼𝑺 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑪𝑳𝑨𝑰𝑴𝑬𝑫 ⏳\n\n🕒 𝑵𝑬𝑿𝑻 𝑩𝑶𝑵𝑼𝑺 𝑨𝑽𝑨𝑰𝑳𝑨𝑩𝑳𝑬 𝑻𝑶𝑴𝑶𝑹𝑹𝑶𝑾 🔥"
+async def get_referrals(user_id):
+    async with aiosqlite.connect(DB_NAME) as db:
+        cur = await db.execute(
+            "SELECT referrals FROM users WHERE user_id=?",
+            (user_id,)
         )
+        row = await cur.fetchone()
+        return row[0] if row else 0
 
-        await q.message.edit_text(
-            txt,
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "🔙 𝑩𝑨𝑪𝑲 🏠",
-                        callback_data="back"
-                    )
-                ]
-            ])
+
+async def get_all_users():
+    async with aiosqlite.connect(DB_NAME) as db:
+        cur = await db.execute("SELECT user_id FROM users")
+        return await cur.fetchall()
+
+
+async def get_total_tickets():
+    async with aiosqlite.connect(DB_NAME) as db:
+        cur = await db.execute("SELECT SUM(tickets) FROM users")
+        row = await cur.fetchone()
+        return row[0] or 0
+
+
+async def get_user_rank(user_id):
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT tickets FROM users WHERE user_id=?",
+            (user_id,)
         )
+        row = await cur.fetchone()
 
-        return
+        if not row:
+            return 0
 
-    if data == "redeem":
+        tickets = row[0]
 
-        user_state[user_id] = "redeem"
-
-        await q.message.edit_text(
-            """
-🎁 𝑬𝑵𝑻𝑬𝑹 𝒀𝑶𝑼𝑹 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 🎟️
-💡 𝑪𝑳𝑨𝑰𝑴 𝒀𝑶𝑼𝑹 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 𝑵𝑶𝑾 🚀
-            """,
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "🔙 𝑩𝑨𝑪𝑲 🏠",
-                        callback_data="back"
-                    )
-                ]
-            ])
+        cur = await db.execute(
+            "SELECT COUNT(*) FROM users WHERE tickets > ?",
+            (tickets,)
         )
+        higher = await cur.fetchone()
 
-        return
+        return higher[0] + 1
 
-    if data == "back":
 
-        await open_main_menu(
-            q.message,
-            user_id
+# ================= REWARDS =================
+async def give_welcome_bonus(user_id):
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT welcome_used FROM users WHERE user_id=?",
+            (user_id,)
         )
+        row = await cur.fetchone()
 
-        return
+        if row and row[0] == 1:
+            return "already"
 
-async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await db.execute("""
+            UPDATE users
+            SET tickets = tickets + 15,
+                welcome_used = 1
+            WHERE user_id=?
+        """, (user_id,))
 
-    if update.effective_chat.type != "private":
-        return
+        await db.commit()
+        return "success"
 
-    if not update.message:
-        return
 
-    user_id = update.effective_user.id
+async def add_referral(referrer_id, user_id):
+    async with aiosqlite.connect(DB_NAME) as db:
 
-    text = update.message.text.strip()
-
-    if user_state.get(user_id) == "redeem":
-
-        username = (
-            f"@{update.effective_user.username}"
-            if update.effective_user.username
-            else update.effective_user.first_name
+        cur = await db.execute(
+            "SELECT referral_used FROM users WHERE user_id=?",
+            (user_id,)
         )
+        row = await cur.fetchone()
 
-        if await already_claimed_code(user_id, text):
+        if row and row[0] == 1:
+            return "already"
 
-            await update.message.reply_text(
-                "❌ 𝑹𝑬𝑫𝑬𝑬𝑴 𝑪𝑶𝑫𝑬 𝑨𝑳𝑹𝑬𝑨𝑫𝒀 𝑼𝑺𝑬𝑫 \n\n🔁 𝑻𝑹𝒀 𝑨 𝑵𝑬𝑾 𝑪𝑶𝑫𝑬 𝑻𝑶 𝑪𝑳𝑨𝑰𝑴 𝑹𝑬𝑾𝑨𝑹𝑫𝑺 🎁🔥"
-            )
+        await db.execute("""
+            UPDATE users
+            SET referral_used = 1
+            WHERE user_id=?
+        """, (user_id,))
 
-            user_state[user_id] = None
-            return
+        await db.execute("""
+            UPDATE users
+            SET tickets = tickets + 10,
+                referrals = referrals + 1
+            WHERE user_id=?
+        """, (referrer_id,))
 
-        result = await use_redeem_code(
-            user_id,
-            username,
-            text
+        await db.commit()
+        return "success"
+
+
+async def claim_daily_bonus(user_id):
+    today = get_today()
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT last_bonus_day FROM users WHERE user_id=?",
+            (user_id,)
         )
+        row = await cur.fetchone()
 
-        if result in ["invalid", "expired", "used"]:
+        if row and row[0] == today:
+            return "already"
 
-            await update.message.reply_text(
-                f"❌ {result.upper()}"
-            )
+        await db.execute("""
+            UPDATE users
+            SET tickets = tickets + 2,
+                last_bonus_day = ?
+            WHERE user_id=?
+        """, (today, user_id))
 
-        else:
+        await db.commit()
+        return "success"
 
-            await save_claim_history(
-                user_id,
-                username,
-                text
-            )
 
-            await update.message.reply_text(
-                f"🎉 𝑹𝑬𝑫𝑬𝑬𝑴 𝑺𝑼𝑪𝑪𝑬𝑺𝑺𝑭𝑼𝑳 ✅🔥\n\n🎟️ +{result} 𝑻𝑰𝑪𝑲𝑬𝑻𝑺 𝑨𝑫𝑫𝑬𝑫 🏆✨"
-            )
+# ================= QUALIFIED REWARD =================
+async def claim_qualified_reward(user_id):
+    async with aiosqlite.connect(DB_NAME) as db:
 
-        user_state[user_id] = None
+        cur = await db.execute("""
+            SELECT referrals, reward_claimed
+            FROM users
+            WHERE user_id=?
+        """, (user_id,))
 
-def get_handlers():
+        row = await cur.fetchone()
 
-    return [
+        if not row:
+            return "no_user"
 
-        CommandHandler(
-            "start",
-            start
-        ),
+        referrals, claimed = row
 
-        CallbackQueryHandler(
-            buttons,
-            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|ultra_bonus)$"
-        ),
+        if referrals < 15:
+            return "not_eligible"
 
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            text_handler
-        )
-    ]
+        if claimed == 1:
+            return "already_claimed"
+
+        await db.execute("""
+            UPDATE users
+            SET tickets = tickets + 250,
+                reward_claimed = 1
+            WHERE user_id=?
+              AND reward_claimed = 0
+        """, (user_id,))
+
+        await db.commit()
+
+        return "success"
