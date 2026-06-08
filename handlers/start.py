@@ -334,12 +334,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         text = f"""
 👤 𝐌𝐘 𝐃𝐀𝐒𝐇𝐁𝐎𝐀𝐑𝐃  📊
-━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━
 🆔 𝑈𝑆𝐸𝑅 𝐼𝐷 : {user_id}
 🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 : {tickets}
 👥 𝑇𝑂𝑇𝐴𝐿 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 : {referrals}
 📊 𝑅𝐴𝑁𝐾: #{rank}
-━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━
 🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 
         """
 
