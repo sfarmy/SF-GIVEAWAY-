@@ -362,22 +362,22 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         users = await top_users()
 
-    total_users = len(
+        total_users = len(
         await get_all_users()
     )
 
-    total_tickets = await get_total_tickets()
+        total_tickets = await get_total_tickets()
     
-    rank = await get_user_rank(user_id)
-    referrals = await get_referrals(user_id)
+        rank = await get_user_rank(user_id)
+        referrals = await get_referrals(user_id)
 
     text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
 ━━━━━━━━━━━━━━━
-👥 𝑈𝑠𝑒𝑟𝑠 : 520
-🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : 9840
-👥 𝑌𝑜𝑢𝑟 𝑅𝑒𝑓𝑒𝑟𝑟𝑎𝑙𝑠 : 17
-📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #4
+👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
+🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
+👥 𝑌𝑜𝑢𝑟 𝑅𝑒𝑓𝑒𝑟𝑟𝑎𝑙𝑠 : {referrals}
+📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
 ━━━━━━━━━━━━━━━
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
 """
@@ -390,7 +390,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text += (
             f"{i}. {name}\n"
             f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
-            f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆; ➤ {referrals}\n\n"
+            f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n\n"
         )
 
     await q.message.edit_text(
