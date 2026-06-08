@@ -5,11 +5,11 @@ from datetime import datetime, timezone, timedelta
 BASE_DIR = os.path.dirname(os.path.abspath(file))
 DB_NAME = os.path.join(BASE_DIR, "database.db")
 
-================= IST TIME (NO PYTZ) =================
+#================= IST TIME (NO PYTZ) =================
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
-================= INIT DB =================
+#================= INIT DB =================
 
 async def init_db():
 
@@ -52,14 +52,6 @@ async with aiosqlite.connect(DB_NAME) as db:
     )  
     """)  
 
-    # 🔥 NEW: 15+ REFERRAL BONUS CLAIM TRACKING  
-    await db.execute("""  
-    CREATE TABLE IF NOT EXISTS referral_bonus_claims (  
-        user_id INTEGER PRIMARY KEY,  
-        claimed_at TEXT  
-    )  
-    """)  
-
     # 🚀 PERFORMANCE INDEXES  
     await db.execute("""  
     CREATE INDEX IF NOT EXISTS idx_users_tickets  
@@ -73,12 +65,12 @@ async with aiosqlite.connect(DB_NAME) as db:
 
     await db.commit()
 
-================= TODAY (IST SAFE) =================
+#================= TODAY (IST SAFE) =================
 
 def get_today():
 return datetime.now(IST).strftime("%Y-%m-%d")
 
-================= ADD USER =================
+#================= ADD USER =================
 
 async def add_user(user_id, username):
 
@@ -113,7 +105,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     await db.commit()  
     return False
 
-================= GET TICKETS =================
+#================= GET TICKETS =================
 
 async def get_tickets(user_id):
 
@@ -125,7 +117,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     row = await cur.fetchone()  
     return row[0] if row else 0
 
-================= GET REFERRALS =================
+#================= GET REFERRALS =================
 
 async def get_referrals(user_id):
 
@@ -140,7 +132,7 @@ async with aiosqlite.connect(DB_NAME) as db:
 
     return row[0] if row else 0
 
-================= TOTAL USERS =================
+#================= TOTAL USERS =================
 
 async def get_total_users():
 
@@ -150,7 +142,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     row = await cur.fetchone()  
     return row[0]
 
-================= TOTAL TICKETS =================
+#================= TOTAL TICKETS =================
 
 async def get_total_tickets():
 
@@ -159,7 +151,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     row = await cur.fetchone()  
     return row[0] or 0
 
-================= TOP USERS =================
+#================= TOP USERS =================
 
 async def top_users():
 
@@ -172,7 +164,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     """)  
     return await cur.fetchall()
 
-================= USER RANK =================
+#================= USER RANK =================
 
 async def get_user_rank(user_id):
 
@@ -197,7 +189,7 @@ async with aiosqlite.connect(DB_NAME) as db:
 
     return higher[0] + 1
 
-================= WELCOME BONUS =================
+#================= WELCOME BONUS =================
 
 async def give_welcome_bonus(user_id):
 
@@ -222,7 +214,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     await db.commit()  
     return "success"
 
-================= REFERRAL =================
+#================= REFERRAL =================
 
 async def add_referral(referrer_id, user_id):
 
@@ -253,7 +245,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     await db.commit()  
     return "success"
 
-================= DAILY BONUS =================
+#================= DAILY BONUS =================
 
 async def claim_daily_bonus(user_id):
 
@@ -280,7 +272,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     await db.commit()  
     return "success"
 
-================= REDEEM SYSTEM =================
+#================= REDEEM SYSTEM =================
 
 async def create_redeem_code(code, reward, uses, total_uses):
 
@@ -349,7 +341,7 @@ async with aiosqlite.connect(DB_NAME) as db:
     await db.commit()  
     return reward
 
-================= HELPERS =================
+#================= HELPERS =================
 
 async def get_all_users():
 
@@ -394,4 +386,3 @@ async with aiosqlite.connect(DB_NAME) as db:
     )  
 
     await db.commit()
-
