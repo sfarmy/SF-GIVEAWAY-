@@ -392,13 +392,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
 """
 
-    for i, u in enumerate(users, 1):
+        for i, u in enumerate(users, 1):
 
-        name = u[0] or "Unknown"
-        tickets = u[1]
-        referrals = u[2]
+            name = u[0] or "Unknown"
+            tickets = u[1]
+            referrals = u[2]
 
-        user_status = (
+            user_status = (
             "🕺🏻𝑄𝑈𝐴𝐿𝐼𝐹𝐼𝐸𝐷"
             if referrals >= 15
             else "🙅🏻𝑁𝑂𝑇 𝑄𝑈𝐴𝐿𝐼𝐹𝐼𝐸𝐷"
@@ -423,7 +423,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
 
+    
         return
+    
+    
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
