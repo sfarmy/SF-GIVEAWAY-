@@ -359,7 +359,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if data == "leaderboard":
-
         users = await top_users()
 
         total_users = len(
@@ -371,7 +370,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         rank = await get_user_rank(user_id)
         referrals = await get_referrals(user_id)
 
-    text = f"""
+        text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
 ━━━━━━━━━━━━━━━━━━━━━━━
 👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
@@ -382,12 +381,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
 """
 
-    for i, u in enumerate(users, 1):
-        name = u[0] or "Unknown"
-        tickets = u[1]
-        referrals = u[2]
+        for i, u in enumerate(users, 1):
+            name = u[0] or "Unknown"
+            tickets = u[1]
+            referrals = u[2]
 
-        text += (
+            text += (
                 f"{i}. {name}\n"
                 f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
                 f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n\n"
