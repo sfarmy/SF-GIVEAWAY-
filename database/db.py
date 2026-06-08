@@ -391,12 +391,11 @@ async def save_claim_history(user_id, username, code):
 
         await db.commit()
         
-# ================= CLAIM REWARD =================
-
 async def claim_qualified_reward(user_id):
 
     async with aiosqlite.connect(DB_NAME) as db:
 
+        # Lock-style check (atomic safety improvement)
         cur = await db.execute("""
             SELECT referrals, reward_claimed
             FROM users
@@ -410,17 +409,21 @@ async def claim_qualified_reward(user_id):
 
         referrals, claimed = row
 
+        # Not eligible
         if referrals < 15:
             return "not_eligible"
 
+        # Already claimed
         if claimed == 1:
             return "already_claimed"
 
+        # FINAL SAFE UPDATE (single atomic operation)
         await db.execute("""
             UPDATE users
             SET tickets = tickets + 250,
                 reward_claimed = 1
             WHERE user_id=?
+              AND reward_claimed = 0
         """, (user_id,))
 
         await db.commit()
