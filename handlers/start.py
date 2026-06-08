@@ -362,15 +362,15 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         users = await top_users()
 
-        total_users = len(
-            await get_all_users()
-        )
+    total_users = len(
+        await get_all_users()
+    )
 
-        total_tickets = await get_total_tickets()
+    total_tickets = await get_total_tickets()
 
-        rank = await get_user_rank(user_id)
+    rank = await get_user_rank(user_id)
 
-        text = f"""
+    text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
 ━━━━━━━━━━━━━━━
 👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
@@ -380,32 +380,31 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
 """
 
-        for i, u in enumerate(users, 1):
+    for i, u in enumerate(users, 1):
+        name = u[0] or "Unknown"
+        tickets = u[1]
+        referrals = u[2]
 
-    name = u[0] or "Unknown"
-    tickets = u[1]
-    referrals = u[2]
-
-    text += (
-        f"{i}. {name}\n"
-        f"🎟 Tickets ➤ {tickets}\n"
-        f"👥 Referrals ➤ {referrals}\n\n"
-    )
-
-        await q.message.edit_text(
-            text,
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "🔙 𝑩𝑨𝑪𝑲 🏠",
-                        callback_data="back"
-                    )
-                ]
-            ])
+        text += (
+            f"{i}. {name}\n"
+            f"🎟 Tickets ➤ {tickets}\n"
+            f"👥 Referrals ➤ {referrals}\n\n"
         )
 
-        return
+    await q.message.edit_text(
+        text,
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "🔙 𝑩𝑨𝑪𝑲 🏠",
+                    callback_data="back"
+                )
+            ]
+        ])
+    )
 
+    return
+    
     if data == "bonus":
 
         r = await claim_daily_bonus(user_id)
