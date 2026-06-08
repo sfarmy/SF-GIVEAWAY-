@@ -373,12 +373,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
-━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━
 👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
 🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
 👥 𝑌𝑜𝑢𝑟 𝑅𝑒𝑓𝑒𝑟𝑟𝑎𝑙𝑠 : {referrals}
 📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
-━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
 """
 
