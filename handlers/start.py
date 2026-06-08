@@ -283,7 +283,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # 🔥 REFERRAL SYSTEM
         state = user_state.get(user_id)
 
-        if state:
+        if isinstance(state, dict):
             if not state.get("referral_done"):
 
                 referrer_id = state.get("referrer_id")
