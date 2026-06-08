@@ -374,7 +374,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         referrals = await get_referrals(user_id)
         status = "🕺🏻𝑄𝑈𝐴𝐿𝐼𝐹𝐼𝐸𝐷" if referrals >= 15 else "🙅🏻𝑁𝑂𝑇 𝑄𝑈𝐴𝐿𝐼𝐹𝐼𝐸𝐷"
 
-    text = f"""
+        text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
 ━━━━━━━━━━━━━━━━━━━━━━━
 👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
@@ -396,7 +396,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     f"{i}. {name}\n"
     f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
     f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n"
-    f"🏅 {user_status}\n\n━━━━━━━━━━━━━━━━━━━━━━━"
+    f"🏅 {user_status}\n\n"
 )
 
     await q.message.edit_text(
