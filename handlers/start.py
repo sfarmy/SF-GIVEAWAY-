@@ -28,7 +28,6 @@ from database.db import (
     get_total_tickets,
     get_user_rank,
     get_referrals,
-    can_claim_reward,
     claim_qualified_reward
 )
 
@@ -351,7 +350,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ━━━━━━━━━━━━━━━━━━━━━━━
 🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 
         """
-    buttons = [
+        buttons = [
         [
             InlineKeyboardButton(
                 "🎁 ULTRA BONUS 🏆",
@@ -366,29 +365,29 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ]
 
-    await q.message.edit_text(
+        await q.message.edit_text(
         text,
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-    return
+        return
 
     if data == "ultra_bonus":
 
         result = await claim_qualified_reward(user_id)
 
-    if result == "success":
-        txt = "🎉 ULTRA BONUS +250 TICKETS CLAIMED 🏆🔥"
-    elif result == "not_eligible":
-        txt = "❌ 15 REFERRALS REQUIRED"
-    elif result == "already_claimed":
-        txt = "⚠️ ALREADY CLAIMED"
-    else:
-        txt = "❌ ERROR"
+        if result == "success":
+            txt = "🎉 ULTRA BONUS +250 TICKETS CLAIMED 🏆🔥"
+        elif result == "not_eligible":
+            txt = "❌ 15 REFERRALS REQUIRED"
+        elif result == "already_claimed":
+            txt = "⚠️ ALREADY CLAIMED"
+        else:
+            txt = "❌ ERROR"
 
-    await q.message.edit_text(
-        txt,
+        await q.message.edit_text(
+            txt,
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton(
@@ -399,7 +398,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
 
-    return
+        return
 
 
     if data == "leaderboard":
