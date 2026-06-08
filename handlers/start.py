@@ -382,12 +382,15 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         for i, u in enumerate(users, 1):
 
-            name = u[0] or "Unknown"
+    name = u[0] or "Unknown"
+    tickets = u[1]
+    referrals = u[2]
 
-            text += (
-                f"{i}. {name}"
-                f" ➤ {u[1]} 𝑡𝑖𝑐𝑘𝑒𝑡𝑠 \n"
-            )
+    text += (
+        f"{i}. {name}\n"
+        f"🎟 Tickets ➤ {tickets}\n"
+        f"👥 Referrals ➤ {referrals}\n\n"
+    )
 
         await q.message.edit_text(
             text,
