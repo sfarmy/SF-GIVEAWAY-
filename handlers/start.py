@@ -27,8 +27,7 @@ from database.db import (
     get_all_users,
     get_total_tickets,
     get_user_rank,
-    get_referrals,
-    claim_qualified_reward
+    get_referrals
 )
 
 from handlers.reward import rewards_menu
@@ -350,56 +349,21 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ━━━━━━━━━━━━━━━━━━━━━━━
 🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 
         """
-        buttons = [
-        [
-            InlineKeyboardButton(
-                "🎁 ULTRA BONUS 🏆",
-                callback_data="ultra_bonus"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "🔙 BACK 🏠",
-                callback_data="back"
-            )
-        ]
-    ]
 
         await q.message.edit_text(
-        text,
-        disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
+            text,
+            disable_web_page_preview=True,
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "🔙 𝑩𝑨𝑪𝑲 🏠",
+                        callback_data="back"
+                    )
+                ]
+            ])
+        )
 
         return
-
-    if data == "ultra_bonus":
-
-        result = await claim_qualified_reward(user_id)
-
-        if result == "success":
-            txt = "🎉 ULTRA BONUS +250 TICKETS CLAIMED 🏆🔥"
-        elif result == "not_eligible":
-            txt = "❌ 15 REFERRALS REQUIRED"
-        elif result == "already_claimed":
-            txt = "⚠️ ALREADY CLAIMED"
-        else:
-            txt = "❌ ERROR"
-
-        await q.message.edit_text(
-            txt,
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "🔙 BACK 🏠",
-                    callback_data="myinfo"
-                )
-            ]
-        ])
-    )
-
-        return
-
 
     if data == "leaderboard":
         users = await top_users()
@@ -584,7 +548,7 @@ def get_handlers():
 
         CallbackQueryHandler(
             buttons,
-            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back|ultra_bonus)$"
+            pattern="^(check_join|myinfo|leaderboard|bonus|redeem|back)$"
         ),
 
         MessageHandler(
