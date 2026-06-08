@@ -404,11 +404,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else "🙅🏻𝑁𝑂𝑇 𝑄𝑈𝐴𝐿𝐼𝐹𝐼𝐸𝐷"
         )
 
-        text += (
-            f"{i}. {name}\n"
-            f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
-            f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n"
-            f"🏅 {user_status}\n\n"
+            text += (
+                f"{i}. {name}\n"
+                f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
+                f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n"
+                f"🏅 {user_status}\n\n"
         )
 
         await q.message.edit_text(
