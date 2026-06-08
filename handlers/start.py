@@ -323,6 +323,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tickets = await get_tickets(user_id)
 
         referrals = await get_referrals(user_id)
+        
+        status = (
+    "✅ QUALIFIED"
+    if referrals >= 15
+    else "❌ NOT QUALIFIED"
+)
 
         rank = await get_user_rank(user_id)
 
@@ -338,6 +344,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🆔 𝑈𝑆𝐸𝑅 𝐼𝐷 : {user_id}
 🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 : {tickets}
 👥 𝑇𝑂𝑇𝐴𝐿 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 : {referrals}
+🏅 𝑆𝑇𝐴𝑇𝑈𝑆 : {status}
 📊 𝑅𝐴𝑁𝐾: #{rank}
 ━━━━━━━━━━━━━━━━━━━━━━━
 🔗 𝑹𝑬𝑭𝑬𝑹𝑹𝑨𝑳 𝑳𝑰𝑵𝑲: {ref_link} 
@@ -369,6 +376,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
         rank = await get_user_rank(user_id)
         referrals = await get_referrals(user_id)
+        status = (
+    "✅ QUALIFIED"
+    if referrals >= 15
+    else "❌ NOT QUALIFIED"
+)
 
         text = f"""
 🏆 𝑳𝑬𝑨𝑫𝑬𝑹𝑩𝑶𝑨𝑹𝑫 📊🔥
@@ -376,6 +388,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 👥 𝑈𝑠𝑒𝑟𝑠 : {total_users}
 🎟 𝑇𝑜𝑡𝑎𝑙 𝑇𝑖𝑐𝑘𝑒𝑡𝑠 : {total_tickets}
 👥 𝑌𝑜𝑢𝑟 𝑅𝑒𝑓𝑒𝑟𝑟𝑎𝑙𝑠 : {referrals}
+🏅 𝑌𝑜𝑢𝑟 𝑆𝑡𝑎𝑡𝑢𝑠 : {status}
 📊 𝑌𝑜𝑢𝑟 𝑅𝑎𝑛𝑘 : #{rank}
 ━━━━━━━━━━━━━━━━━━━━━━━
 🔥 𝑻𝑶𝑷 50 𝑼𝑺𝑬𝑹𝑺 🏆
@@ -385,12 +398,21 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             name = u[0] or "Unknown"
             tickets = u[1]
             referrals = u[2]
+            
+            status = (
+        "✅ QUALIFIED"
+        if refs >= 15
+        else "❌ NOT QUALIFIED"
+    )
+
 
             text += (
                 f"{i}. {name}\n"
                 f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
-                f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n\n"
-        )
+                f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n"
+                f"🏅 𝑆𝑇𝐴𝑇𝑈𝑆 ➤ {status}\n\n"
+    )
+        
 
         await q.message.edit_text(
         text,
