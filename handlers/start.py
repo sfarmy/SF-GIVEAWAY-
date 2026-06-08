@@ -388,9 +388,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         referrals = u[2]
 
         text += (
-            f"{i}. {name}\n"
-            f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
-            f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n\n"
+                f"{i}. {name}\n"
+                f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
+                f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n\n"
         )
 
         await q.message.edit_text(
