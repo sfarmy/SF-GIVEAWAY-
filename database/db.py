@@ -51,8 +51,18 @@ async def init_db():
         )
         """)
 
-        await db.commit()
+        # 🚀 PERFORMANCE INDEXES
+        await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_users_tickets
+        ON users(tickets)
+        """)
 
+        await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_redeem_used_user_code
+        ON redeem_used(user_id, code)
+        """)
+
+        await db.commit()
 
 # ================= TODAY (IST SAFE) =================
 def get_today():
@@ -71,17 +81,27 @@ async def add_user(user_id, username):
         row = await cur.fetchone()
 
         if not row:
+
             await db.execute("""
-                INSERT INTO users (user_id, username, tickets, referrals, welcome_used, referral_used, last_bonus_day, is_banned)
+                INSERT INTO users (
+                    user_id, username, tickets,
+                    referrals, welcome_used,
+                    referral_used, last_bonus_day,
+                    is_banned
+                )
                 VALUES (?, ?, 0, 0, 0, 0, '', 0)
             """, (user_id, username))
-        else:
-            await db.execute(
-                "UPDATE users SET username=? WHERE user_id=?",
-                (username, user_id)
-            )
+
+            await db.commit()
+            return True
+
+        await db.execute(
+            "UPDATE users SET username=? WHERE user_id=?",
+            (username, user_id)
+        )
 
         await db.commit()
+        return False
 
 
 # ================= GET TICKETS =================
@@ -96,10 +116,26 @@ async def get_tickets(user_id):
         return row[0] if row else 0
 
 
+# ================= GET REFERRALS =================
+async def get_referrals(user_id):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT referrals FROM users WHERE user_id=?",
+            (user_id,)
+        )
+
+        row = await cur.fetchone()
+
+        return row[0] if row else 0
+
+
 # ================= TOTAL USERS =================
 async def get_total_users():
 
     async with aiosqlite.connect(DB_NAME) as db:
+        
         cur = await db.execute("SELECT COUNT(*) FROM users")
         row = await cur.fetchone()
         return row[0]
@@ -122,7 +158,7 @@ async def top_users():
             SELECT username, tickets
             FROM users
             ORDER BY tickets DESC
-            LIMIT 15
+            LIMIT 50
         """)
         return await cur.fetchall()
 
