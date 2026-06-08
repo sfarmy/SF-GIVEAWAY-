@@ -393,7 +393,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n\n"
         )
 
-    await q.message.edit_text(
+        await q.message.edit_text(
         text,
         reply_markup=InlineKeyboardMarkup([
             [
@@ -405,7 +405,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
 
-    return
+        return
     
     if data == "bonus":
 
