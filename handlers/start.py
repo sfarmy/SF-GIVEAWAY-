@@ -401,7 +401,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             status = (
         "✅ QUALIFIED"
-        if refs >= 15
+        if referrals >= 15
         else "❌ NOT QUALIFIED"
     )
 
@@ -410,7 +410,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"{i}. {name}\n"
                 f"🎟 𝑇𝐼𝐶𝐾𝐸𝑇𝑆 ➤ {tickets}\n"
                 f"👥 𝑅𝐸𝐹𝐸𝑅𝑅𝐴𝐿𝑆 ➤ {referrals}\n"
-                f"🏅 𝑆𝑇𝐴𝑇𝑈𝑆 ➤ {status}\n\n"
+                f"🏅 STATUS ➤ {status}\n\n"
     )
         
 
