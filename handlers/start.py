@@ -411,7 +411,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🏅 {user_status}\n\n"
         )
 
-    await q.message.edit_text(
+        await q.message.edit_text(
         text,
         reply_markup=InlineKeyboardMarkup([
             [
