@@ -52,6 +52,14 @@ async with aiosqlite.connect(DB_NAME) as db:
     )  
     """)  
 
+    # 🔥 NEW: 15+ REFERRAL BONUS CLAIM TRACKING  
+    await db.execute("""  
+    CREATE TABLE IF NOT EXISTS referral_bonus_claims (  
+        user_id INTEGER PRIMARY KEY,  
+        claimed_at TEXT  
+    )  
+    """)  
+
     # 🚀 PERFORMANCE INDEXES  
     await db.execute("""  
     CREATE INDEX IF NOT EXISTS idx_users_tickets  
@@ -386,3 +394,4 @@ async with aiosqlite.connect(DB_NAME) as db:
     )  
 
     await db.commit()
+
