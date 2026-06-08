@@ -460,7 +460,10 @@ async def migrate_db():
 
         columns = [c[1] for c in cols]
 
+        # safe add (no duplicate crash)
         if "reward_claimed" not in columns:
-            await db.execute("ALTER TABLE users ADD COLUMN reward_claimed INTEGER DEFAULT 0")
+            await db.execute(
+                "ALTER TABLE users ADD COLUMN reward_claimed INTEGER DEFAULT 0"
+            )
 
         await db.commit()
