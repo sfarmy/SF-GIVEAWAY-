@@ -23,8 +23,7 @@ async def init_db():
             welcome_used INTEGER DEFAULT 0,
             referral_used INTEGER DEFAULT 0,
             last_bonus_day TEXT DEFAULT '',
-            is_banned INTEGER DEFAULT 0,
-            reward_claimed INTEGER DEFAULT 0
+            is_banned INTEGER DEFAULT 0
         )
         """)
 
@@ -388,82 +387,5 @@ async def save_claim_history(user_id, username, code):
             "INSERT INTO redeem_logs (user_id, username, code) VALUES (?, ?, ?)",
             (user_id, username, code)
         )
-
-        await db.commit()
-        
-async def claim_qualified_reward(user_id):
-
-    async with aiosqlite.connect(DB_NAME) as db:
-
-        # Lock-style check (atomic safety improvement)
-        cur = await db.execute("""
-            SELECT referrals, reward_claimed
-            FROM users
-            WHERE user_id=?
-        """, (user_id,))
-
-        row = await cur.fetchone()
-
-        if not row:
-            return "no_user"
-
-        referrals, claimed = row
-
-        # Not eligible
-        if referrals < 15:
-            return "not_eligible"
-
-        # Already claimed
-        if claimed == 1:
-            return "already_claimed"
-
-        # FINAL SAFE UPDATE (single atomic operation)
-        await db.execute("""
-            UPDATE users
-            SET tickets = tickets + 250,
-                reward_claimed = 1
-            WHERE user_id=?
-              AND reward_claimed = 0
-        """, (user_id,))
-
-        await db.commit()
-
-        return "success"
-        
-        
-# ================= CLAIM CHECK =================
-async def can_claim_reward(user_id):
-
-    async with aiosqlite.connect(DB_NAME) as db:
-
-        cur = await db.execute("""
-            SELECT referrals, reward_claimed
-            FROM users
-            WHERE user_id=?
-        """, (user_id,))
-
-        row = await cur.fetchone()
-
-        if not row:
-            return False
-
-        referrals, claimed = row
-
-        return referrals >= 15 and claimed == 0        
-        
-        
-async def migrate_db():
-    async with aiosqlite.connect(DB_NAME) as db:
-
-        cur = await db.execute("PRAGMA table_info(users)")
-        cols = await cur.fetchall()
-
-        columns = [c[1] for c in cols]
-
-        # safe add (no duplicate crash)
-        if "reward_claimed" not in columns:
-            await db.execute(
-                "ALTER TABLE users ADD COLUMN reward_claimed INTEGER DEFAULT 0"
-            )
 
         await db.commit()
