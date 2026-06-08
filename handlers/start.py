@@ -390,6 +390,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         name = u[0] or "Unknown"
         tickets = u[1]
         referrals = u[2]
+        user_status = "✅ QUALIFIED" if referrals >= 15 else "❌ NOT QUALIFIED"
 
         text += (
     f"{i}. {name}\n"
