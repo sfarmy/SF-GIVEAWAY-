@@ -456,13 +456,11 @@ async def migrate_db():
     async with aiosqlite.connect(DB_NAME) as db:
 
         cur = await db.execute("PRAGMA table_info(users)")
-        columns = await cur.fetchall()
+        cols = await cur.fetchall()
 
-        existing_columns = [col[1] for col in columns]
+        columns = [c[1] for c in cols]
 
-        if "reward_claimed" not in existing_columns:
-            await db.execute(
-                "ALTER TABLE users ADD COLUMN reward_claimed INTEGER DEFAULT 0"
-            )
+        if "reward_claimed" not in columns:
+            await db.execute("ALTER TABLE users ADD COLUMN reward_claimed INTEGER DEFAULT 0")
 
-        await db.commit()   
+        await db.commit()
