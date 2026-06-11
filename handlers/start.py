@@ -59,6 +59,11 @@ CHANNELS = [
         "name": "𝑆𝐹 𝐺𝐼𝑉𝐸𝐴𝑊𝐴𝑌 🎁",
         "link": "https://t.me/sfgiveaways",
         "id": -1003664665551
+    },
+     {
+        "name": "𝐸𝑋𝑃𝑂𝑆𝐸 𝐶𝐻𝐴𝑁𝑁𝐸𝐿 🦅",
+        "link": "https://t.me/ExposeMafia",
+        "id": -1003040006163
     }
 ]
 
