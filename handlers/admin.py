@@ -17,7 +17,9 @@ from database.db import (
     list_redeem_codes,
     get_all_users,
     get_redeem_users,
-    DB_NAME
+    DB_NAME,
+    add_tickets,
+    remove_tickets
 )
 
 import os
@@ -30,6 +32,9 @@ ADMIN_IDS = [7305665779, 7331380618]
 restore_state = {}
 broadcast_state = {}
 msg_state = {}
+
+add_ticket_state = {}
+remove_ticket_state = {}
 
 
 # ================= CHECK ADMIN =================
@@ -59,6 +64,20 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton(
                 "📢 Broadcast",
                 callback_data="adm_broadcast"
+            )
+        ],
+        
+        [
+    InlineKeyboardButton(
+        "➕ Add Tickets",
+        callback_data="adm_addtickets"
+            )
+        ],
+
+        [
+    InlineKeyboardButton(
+        "➖ Remove Tickets",
+        callback_data="adm_removetickets"
             )
         ],
 
@@ -120,6 +139,29 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.message.edit_text(text)
         return
+
+
+    if data == "adm_addtickets":
+
+        add_ticket_state[q.from_user.id] = True
+
+        await q.message.edit_text(
+        "➕ SEND:\n\nUSER_ID TICKETS"
+    )
+
+        return
+
+
+    if data == "adm_removetickets":
+
+        remove_ticket_state[q.from_user.id] = True
+
+        await q.message.edit_text(
+        "➖ SEND:\n\nUSER_ID TICKETS"
+    )
+
+        return
+
 
     # ================= BROADCAST =================
     if data == "adm_broadcast":
@@ -238,6 +280,103 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
 
     text = update.message.text.strip()
+
+
+    # ================= ADD TICKETS =================
+    if add_ticket_state.get(user_id):
+
+        try:
+
+            uid, amount = text.split()
+
+            await add_tickets(
+                int(uid),
+                int(amount)
+            )
+
+            await update.message.reply_text(
+                f"✅ {amount} Tickets Added To {uid}"
+            )
+
+        except Exception as e:
+
+            await update.message.reply_text(
+                f"❌ ERROR:\n{e}"
+            )
+
+        add_ticket_state[user_id] = False
+
+        return
+
+
+    # ================= REMOVE TICKETS =================
+    if remove_ticket_state.get(user_id):
+
+        try:
+
+            uid, amount = text.split()
+
+            result = await remove_tickets(
+                int(uid),
+                int(amount)
+            )
+
+            if result == "user_not_found":
+
+                await update.message.reply_text(
+                    "❌ USER NOT FOUND"
+                )
+
+            else:
+
+                await update.message.reply_text(
+                    f"✅ {amount} Tickets Removed From {uid}"
+                )
+
+        except Exception as e:
+
+            await update.message.reply_text(
+                f"❌ ERROR:\n{e}"
+            )
+
+        remove_ticket_state[user_id] = False
+
+        return
+
+
+    # ================= BROADCAST =================
+    if broadcast_state.get(user_id):
+
+        users = await get_all_users()
+
+        sent = 0
+        failed = 0
+
+        for u in users:
+
+            try:
+
+                await context.bot.send_message(
+                    chat_id=u[0],
+                    text=text
+                )
+
+                sent += 1
+
+            except:
+                failed += 1
+
+        broadcast_state[user_id] = False
+
+        await update.message.reply_text(
+            f"✅ SENT: {sent}\n❌ FAILED: {failed}"
+        )
+
+        return
+    
+    
+  
+
 
     # ================= BROADCAST =================
     if broadcast_state.get(user_id):
