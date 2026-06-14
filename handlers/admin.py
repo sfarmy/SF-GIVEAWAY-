@@ -19,9 +19,10 @@ from database.db import (
     get_redeem_users,
     DB_NAME,
     add_tickets,
-    remove_tickets
+    remove_tickets,
+    add_referrals,
+    remove_referrals
 )
-
 import os
 import shutil
 
@@ -36,6 +37,8 @@ msg_state = {}
 add_ticket_state = {}
 remove_ticket_state = {}
 
+add_ref_state = {}
+remove_ref_state = {}
 
 # ================= CHECK ADMIN =================
 def is_admin(user_id):
@@ -78,6 +81,20 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     InlineKeyboardButton(
         "➖ Remove Tickets",
         callback_data="adm_removetickets"
+            )
+        ],
+        
+        [
+    InlineKeyboardButton(
+        "👥 Add Referrals",
+        callback_data="adm_addrefs"
+            )
+        ],
+
+        [
+    InlineKeyboardButton(
+        "❌ Remove Referrals",
+        callback_data="adm_removerefs"
             )
         ],
 
@@ -161,7 +178,28 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
         return
+        
+        
+    if data == "adm_addrefs":
 
+        add_ref_state[q.from_user.id] = True
+
+        await q.message.edit_text(
+        "👥 SEND:\n\nUSER_ID REFERRALS"
+    )
+
+        return
+
+
+    if data == "adm_removerefs":
+
+        remove_ref_state[q.from_user.id] = True
+
+        await q.message.edit_text(
+        "❌ SEND:\n\nUSER_ID REFERRALS"
+    )
+
+        return
 
     # ================= BROADCAST =================
     if data == "adm_broadcast":
@@ -342,7 +380,67 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         remove_ticket_state[user_id] = False
 
         return
+        
+        # ================= ADD REFERRALS =================
+    if add_ref_state.get(user_id):
 
+        try:
+
+            uid, amount = text.split()
+
+            await add_referrals(
+                int(uid),
+                int(amount)
+        )
+
+            await update.message.reply_text(
+            f"✅ {amount} Referrals Added To {uid}"
+        )
+
+        except Exception as e:
+
+            await update.message.reply_text(
+            f"❌ ERROR:\n{e}"
+        )
+
+        add_ref_state[user_id] = False
+
+        return
+
+
+# ================= REMOVE REFERRALS =================
+    if remove_ref_state.get(user_id):
+
+        try:
+
+            uid, amount = text.split()
+
+            result = await remove_referrals(
+                int(uid),
+                int(amount)
+        )
+
+            if result == "user_not_found":
+
+                await update.message.reply_text(
+                "❌ USER NOT FOUND"
+            )
+
+            else:
+
+                await update.message.reply_text(
+                f"✅ {amount} Referrals Removed From {uid}"
+            )
+
+        except Exception as e:
+
+            await update.message.reply_text(
+            f"❌ ERROR:\n{e}"
+        )
+
+        remove_ref_state[user_id] = False
+
+        return
 
     # ================= BROADCAST =================
     if broadcast_state.get(user_id):
