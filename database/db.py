@@ -431,3 +431,39 @@ async def remove_tickets(user_id, amount):
         await db.commit()
 
         return "success"
+async def add_referrals(user_id, amount):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        await db.execute(
+            "UPDATE users SET referrals = referrals + ? WHERE user_id=?",
+            (amount, user_id)
+        )
+
+        await db.commit()
+
+
+async def remove_referrals(user_id, amount):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        cur = await db.execute(
+            "SELECT referrals FROM users WHERE user_id=?",
+            (user_id,)
+        )
+
+        row = await cur.fetchone()
+
+        if not row:
+            return "user_not_found"
+
+        new_referrals = max(0, row[0] - amount)
+
+        await db.execute(
+            "UPDATE users SET referrals=? WHERE user_id=?",
+            (new_referrals, user_id)
+        )
+
+        await db.commit()
+
+        return "success"
